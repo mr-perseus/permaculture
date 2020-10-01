@@ -14,6 +14,7 @@ import {
 import store from 'store-js';
 import gql from 'graphql-tag';
 import { Mutation } from 'react-apollo';
+import React from "react";
 
 const UPDATE_PRICE = gql`
  mutation productVariantUpdate($input: ProductVariantInput!) {
@@ -31,6 +32,7 @@ const UPDATE_PRICE = gql`
 
 class EditProduct extends React.Component {
   state = {
+    name: undefined,
     discount: '',
     price: '',
     variantId: '',
@@ -47,7 +49,7 @@ class EditProduct extends React.Component {
       <Mutation
         mutation={UPDATE_PRICE}
       >
-        {(handleSubmit, { error, data }) => {
+        {(handleSubmit: any, { error, data }: any) => {
           const showError = error && (
             <Banner status="critical">{error.message}</Banner>
           );
@@ -67,7 +69,7 @@ class EditProduct extends React.Component {
                   </Layout.Section>
                   <Layout.Section>
                     <DisplayText size="large">{name}</DisplayText>
-                    <Form>
+                    <Form onSubmit={()=> {}}>
                       <Card sectioned>
                         <FormLayout>
                           <FormLayout.Group>
@@ -76,6 +78,7 @@ class EditProduct extends React.Component {
                               value={price}
                               disabled
                               label="Original price"
+                                // @ts-ignore
                               type="price"
                             />
                             <TextField
@@ -83,6 +86,7 @@ class EditProduct extends React.Component {
                               value={discount}
                               onChange={this.handleChange('discount')}
                               label="Discounted price"
+                                // @ts-ignore
                               type="discount"
                             />
                           </FormLayout.Group>
@@ -92,7 +96,8 @@ class EditProduct extends React.Component {
                         </FormLayout>
                       </Card>
                       <PageActions
-                        primaryAction={[
+                          // @ts-ignore
+                          primaryAction={[
                           {
                             content: 'Save',
                             onAction: () => {

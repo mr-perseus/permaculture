@@ -10,6 +10,7 @@ import {
 import store from 'store-js';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { Context } from '@shopify/app-bridge-react';
+import React from "react";
 
 const GET_PRODUCTS_BY_ID = gql`
   query getProducts($ids: [ID!]!) {
@@ -55,8 +56,10 @@ class ResourceListWithProducts extends React.Component {
 
     const twoWeeksFromNow = new Date(Date.now() + 12096e5).toDateString();
     return (
-      <Query query={GET_PRODUCTS_BY_ID} variables={{ ids: store.get('ids') }}>
-        {({ data, loading, error }) => {
+        // @ts-ignore
+        <Query query={GET_PRODUCTS_BY_ID} variables={{ ids: store.get('ids') }}>
+          // @ts-ignore
+          {({ data, loading, error }) => {
           if (loading) { return <div>Loading…</div>; }
           if (error) { return <div>{error.message}</div>; }
           console.log(data);
@@ -66,7 +69,7 @@ class ResourceListWithProducts extends React.Component {
                 showHeader
                 resourceName={{ singular: 'Product', plural: 'Products' }}
                 items={data.nodes}
-                renderItem={(item) => {
+                renderItem={(item: any) => {
                   const media = (
                     <Thumbnail
                       source={
@@ -119,5 +122,5 @@ class ResourceListWithProducts extends React.Component {
     );
   }
 }
-
+// @ts-ignore
 export default ResourceListWithProducts;

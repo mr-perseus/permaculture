@@ -8,6 +8,7 @@ import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 import ClientRouter from '../components/ClientRouter';
+import React from 'react';
 
 const client = new ApolloClient({
   fetchOptions: {
@@ -18,6 +19,7 @@ const client = new ApolloClient({
 class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
+    // @ts-ignore
     const config = { apiKey: API_KEY, shopOrigin: Cookies.get("shopOrigin"), forceRedirect: true };
 
     return (
