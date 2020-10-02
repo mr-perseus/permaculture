@@ -78,11 +78,14 @@ class AnnotatedLayout extends React.Component {
         console.log('submission', this.state);
     };
 
-    handleChange = (field) => (value) => this.setState({ [field]: value });
+    handleChange = (field) => {
+        return (value) => this.setState({ [field]: value });
+    };
 
     handleToggle = () => {
-        // @ts-ignore
-        this.setState(({ enabled }) => ({ enabled: !enabled }));
+        this.setState(({ enabled }: { enabled: boolean }) => {
+            return { enabled: !enabled };
+        });
     };
 }
 

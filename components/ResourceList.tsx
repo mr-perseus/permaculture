@@ -41,7 +41,7 @@ const GET_PRODUCTS_BY_ID = gql`
     }
 `;
 
-class ResourceListWithProducts extends React.Component {
+export class ResourceListWithProducts extends React.Component {
     static contextType = Context;
 
     render() {
@@ -53,13 +53,12 @@ class ResourceListWithProducts extends React.Component {
 
         const twoWeeksFromNow = new Date(Date.now() + 12096e5).toDateString();
         return (
-            // @ts-ignore
             <Query
                 query={GET_PRODUCTS_BY_ID}
                 variables={{ ids: store.get('ids') }}
             >
-                // @ts-ignore
-                {({ data, loading, error }) => {
+                {({ data, loading, error }: any) => {
+                    // TODO fix typing here
                     if (loading) {
                         return <div>Loading…</div>;
                     }
@@ -93,9 +92,8 @@ class ResourceListWithProducts extends React.Component {
                                             }
                                         />
                                     );
-                                    const {
-                                        price,
-                                    } = item.variants.edges[0].node;
+                                    const price =
+                                        item.variants.edges[0].node.price;
                                     return (
                                         <ResourceList.Item
                                             id={item.id}
@@ -135,5 +133,3 @@ class ResourceListWithProducts extends React.Component {
         );
     }
 }
-// @ts-ignore
-export default ResourceListWithProducts;

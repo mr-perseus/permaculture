@@ -6,6 +6,7 @@ import {
     FormLayout,
     Frame,
     Layout,
+    LoadableAction,
     Page,
     PageActions,
     TextField,
@@ -78,8 +79,7 @@ class EditProduct extends React.Component {
                                                             value={price}
                                                             disabled
                                                             label="Original price"
-                                                            // @ts-ignore
-                                                            type="price"
+                                                            type="currency"
                                                         />
                                                         <TextField
                                                             prefix="$"
@@ -88,8 +88,7 @@ class EditProduct extends React.Component {
                                                                 'discount',
                                                             )}
                                                             label="Discounted price"
-                                                            // @ts-ignore
-                                                            type="discount"
+                                                            type="currency"
                                                         />
                                                     </FormLayout.Group>
                                                     <p>
@@ -99,23 +98,24 @@ class EditProduct extends React.Component {
                                                 </FormLayout>
                                             </Card>
                                             <PageActions
-                                                // @ts-ignore
-                                                primaryAction={[
-                                                    {
-                                                        content: 'Save',
-                                                        onAction: () => {
-                                                            const productVariableInput = {
-                                                                id: variantId,
-                                                                price: discount,
-                                                            };
-                                                            handleSubmit({
-                                                                variables: {
-                                                                    input: productVariableInput,
-                                                                },
-                                                            });
+                                                primaryAction={
+                                                    [
+                                                        {
+                                                            content: 'Save',
+                                                            onAction: () => {
+                                                                const productVariableInput = {
+                                                                    id: variantId,
+                                                                    price: discount,
+                                                                };
+                                                                handleSubmit({
+                                                                    variables: {
+                                                                        input: productVariableInput,
+                                                                    },
+                                                                });
+                                                            },
                                                         },
-                                                    },
-                                                ]}
+                                                    ] as LoadableAction
+                                                }
                                                 secondaryActions={[
                                                     {
                                                         content:
@@ -134,11 +134,13 @@ class EditProduct extends React.Component {
         );
     }
 
-    handleChange = (field) => (value) => this.setState({ [field]: value });
+    handleChange = (field) => {
+        return (value) => this.setState({ [field]: value });
+    };
 
     itemToBeConsumed = () => {
         const item = store.get('item');
-        const { price } = item.variants.edges[0].node;
+        const price = item.variants.edges[0].node.price;
         const variantId = item.variants.edges[0].node.id;
         const discounter = price * 0.1;
         this.setState({ price, variantId });

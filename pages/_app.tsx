@@ -7,8 +7,8 @@ import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
-import React from 'react';
 import ClientRouter from '../components/ClientRouter';
+import React from 'react';
 
 const client = new ApolloClient({
     fetchOptions: {
@@ -20,14 +20,13 @@ class MyApp extends App {
     render() {
         const { Component, pageProps } = this.props;
         const config = {
-            // @ts-ignore
             apiKey: API_KEY,
             shopOrigin: Cookies.get('shopOrigin'),
             forceRedirect: true,
         };
 
         return (
-            <>
+            <React.Fragment>
                 <Head>
                     <title>Sample App</title>
                     <meta charSet="utf-8" />
@@ -40,7 +39,7 @@ class MyApp extends App {
                         </ApolloProvider>
                     </AppProvider>
                 </Provider>
-            </>
+            </React.Fragment>
         );
     }
 }
