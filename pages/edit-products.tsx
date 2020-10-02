@@ -134,13 +134,11 @@ class EditProduct extends React.Component {
         );
     }
 
-    handleChange = (field) => {
-        return (value) => this.setState({ [field]: value });
-    };
+    handleChange = (field) => (value) => this.setState({ [field]: value });
 
     itemToBeConsumed = () => {
         const item = store.get('item');
-        const price = item.variants.edges[0].node.price;
+        const { price } = item.variants.edges[0].node;
         const variantId = item.variants.edges[0].node.id;
         const discounter = price * 0.1;
         this.setState({ price, variantId });

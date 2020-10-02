@@ -93,8 +93,9 @@ class ResourceListWithProducts extends React.Component {
                                             }
                                         />
                                     );
-                                    const price =
-                                        item.variants.edges[0].node.price;
+                                    const {
+                                        price,
+                                    } = item.variants.edges[0].node;
                                     return (
                                         <ResourceList.Item
                                             id={item.id}
