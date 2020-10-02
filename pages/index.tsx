@@ -3,6 +3,7 @@ import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
 import { ResourceListWithProducts } from '../components/ResourceList';
 import React from 'react';
+import { SelectPayload } from '@shopify/app-bridge/actions/ResourcePicker';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
@@ -49,7 +50,7 @@ class Index extends React.Component {
         );
     }
 
-    handleSelection = (resources) => {
+    handleSelection = (resources: SelectPayload) => {
         const idsFromResources = resources.selection.map(
             (product) => product.id,
         );

@@ -21,7 +21,7 @@ class MyApp extends App {
         const { Component, pageProps } = this.props;
         const config = {
             apiKey: API_KEY,
-            shopOrigin: Cookies.get('shopOrigin'),
+            shopOrigin: Cookies.get('shopOrigin') || '',
             forceRedirect: true,
         };
 

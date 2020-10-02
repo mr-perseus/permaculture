@@ -134,8 +134,8 @@ class EditProduct extends React.Component {
         );
     }
 
-    handleChange = (field) => {
-        return (value) => this.setState({ [field]: value });
+    handleChange = (field: string) => {
+        return (value: string) => this.setState({ [field]: value });
     };
 
     itemToBeConsumed = () => {

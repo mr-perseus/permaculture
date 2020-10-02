@@ -1,4 +1,6 @@
-const getSubscriptionUrl = async (ctx, accessToken, shop) => {
+import { Context } from 'koa';
+
+const getSubscriptionUrl = async (ctx: Context, accessToken: string, shop: string) => {
     const query = JSON.stringify({
         query: `mutation {
       appSubscriptionCreate(

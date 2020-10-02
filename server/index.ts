@@ -4,7 +4,7 @@ import 'isomorphic-fetch';
 import dotenv from 'dotenv';
 import Koa from 'koa';
 import next from 'next';
-import session from 'koa-session';
+import session, { Session } from 'koa-session';
 import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
@@ -16,12 +16,16 @@ import {
 
 dotenv.config();
 
-const port = parseInt(process.env.PORT, 10) || 3000;
+const port = parseInt(String(process.env.PORT), 10) || 3000;
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST } = process.env;
+
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET_KEY || !HOST) {
+    throw new Error("One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET_KEY, HOST")
+}
 
 app.prepare().then(() => {
     const server = new Koa();
@@ -35,7 +39,7 @@ app.prepare().then(() => {
             secret: SHOPIFY_API_SECRET_KEY,
             scopes: ['read_products', 'write_products'],
             async afterAuth(ctx) {
-                const { shop, accessToken } = ctx.session;
+                const { shop, accessToken } = ctx.session as Session;
                 ctx.cookies.set('shopOrigin', shop, {
                     httpOnly: false,
                     secure: true,
