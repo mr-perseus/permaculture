@@ -80,8 +80,7 @@ class AnnotatedLayout extends React.Component {
   };
 
   handleToggle = () => {
-    // @ts-ignore
-    this.setState(({ enabled }) => {
+    this.setState(({ enabled }: {enabled: boolean}) => {
       return { enabled: !enabled };
     });
   };

@@ -5,7 +5,7 @@ import {
   Form,
   FormLayout,
   Frame,
-  Layout,
+  Layout, LoadableAction,
   Page,
   PageActions,
   TextField,
@@ -78,16 +78,14 @@ class EditProduct extends React.Component {
                               value={price}
                               disabled
                               label="Original price"
-                                // @ts-ignore
-                              type="price"
+                              type="currency"
                             />
                             <TextField
                               prefix="$"
                               value={discount}
                               onChange={this.handleChange('discount')}
                               label="Discounted price"
-                                // @ts-ignore
-                              type="discount"
+                              type="currency"
                             />
                           </FormLayout.Group>
                           <p>
@@ -96,8 +94,7 @@ class EditProduct extends React.Component {
                         </FormLayout>
                       </Card>
                       <PageActions
-                          // @ts-ignore
-                          primaryAction={[
+                          primaryAction={([
                           {
                             content: 'Save',
                             onAction: () => {
@@ -110,7 +107,7 @@ class EditProduct extends React.Component {
                               });
                             },
                           },
-                        ]}
+                        ] as LoadableAction)}
                         secondaryActions={[
                           {
                             content: 'Remove discount',
