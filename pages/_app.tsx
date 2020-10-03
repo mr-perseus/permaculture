@@ -8,6 +8,7 @@ import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 import ClientRouter from '../components/ClientRouter';
+import React from 'react';
 
 const client = new ApolloClient({
   fetchOptions: {

@@ -49,4 +49,4 @@ const getSubscriptionUrl = async (ctx, accessToken, shop) => {
   return ctx.redirect(confirmationUrl)
 };
 
-module.exports = getSubscriptionUrl;
+export {getSubscriptionUrl};

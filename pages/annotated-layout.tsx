@@ -10,6 +10,7 @@ import {
   TextField,
   TextStyle,
 } from '@shopify/polaris';
+import React from "react";
 
 class AnnotatedLayout extends React.Component {
   state = {
@@ -36,7 +37,7 @@ class AnnotatedLayout extends React.Component {
                     value={discount}
                     onChange={this.handleChange('discount')}
                     label="Discount percentage"
-                    type="discount"
+                    // type="discount"
                   />
                   <Stack distribution="trailing">
                     <Button primary submit>
@@ -79,7 +80,7 @@ class AnnotatedLayout extends React.Component {
   };
 
   handleToggle = () => {
-    this.setState(({ enabled }) => {
+    this.setState(({ enabled }: {enabled: boolean}) => {
       return { enabled: !enabled };
     });
   };

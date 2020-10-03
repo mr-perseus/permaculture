@@ -1,16 +1,16 @@
-require('isomorphic-fetch');
-const dotenv = require('dotenv');
+import {getSubscriptionUrl} from "./getSubscriptionUrl";
+
+import 'isomorphic-fetch';
+import dotenv from 'dotenv';
+import Koa from 'koa';
+import next from 'next'
+import session from 'koa-session';
+import graphQLProxy, {ApiVersion} from '@shopify/koa-shopify-graphql-proxy';
+import Router from 'koa-router';
+import createShopifyAuth, {verifyRequest} from "@shopify/koa-shopify-auth";
+import {DeliveryMethod, receiveWebhook, registerWebhook} from '@shopify/koa-shopify-webhooks';
+
 dotenv.config();
-const Koa = require('koa');
-const next = require('next');
-const { default: createShopifyAuth } = require('@shopify/koa-shopify-auth');
-const { verifyRequest } = require('@shopify/koa-shopify-auth');
-const session = require('koa-session');
-const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy');
-const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
-const Router = require('koa-router');
-const { receiveWebhook, registerWebhook } = require('@shopify/koa-shopify-webhooks');
-const getSubscriptionUrl = require('./server/getSubscriptionUrl');
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 const dev = process.env.NODE_ENV !== 'production';
@@ -46,7 +46,8 @@ app.prepare().then(() => {
           topic: 'PRODUCTS_CREATE',
           accessToken,
           shop,
-          apiVersion: ApiVersion.July20
+          apiVersion: ApiVersion.July20,
+          deliveryMethod: DeliveryMethod.Http
         });
 
         if (registration.success) {
