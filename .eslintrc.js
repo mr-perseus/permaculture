@@ -15,5 +15,8 @@ module.exports = {
         'prettier/prettier': ['warn'],
         'react/jsx-indent': ['warn', 4],
         'react/jsx-indent-props': ['warn', 4],
+
+        // TODO re-enable this rule
+        'no-console': 'off',
     },
 };
