@@ -1,26 +1,26 @@
 {
-  "private": true,
-  "name": "permaculture-client",
-  "version": "0.0.0",
-  "dependencies": {
-    "@shopify/app-bridge": "1.27.2",
-    "@shopify/app-bridge-react": "1.27.2",
-    "@shopify/polaris": "5.5.0",
-    "@zeit/next-css": "1.0.1",
-    "apollo-boost": "0.4.9",
-    "graphql": "15.3.0",
-    "graphql-tag": "2.11.0",
-    "js-cookie": "2.2.1",
-    "next": "9.5.3",
-    "react": "16.13.1",
-    "react-apollo": "3.1.5",
-    "react-dom": "16.13.1",
-    "store-js": "2.0.4"
-  },
-  "devDependencies": {
-    "@types/js-cookie": "2.2.6",
-    "@types/node": "14.11.5",
-    "@types/react": "16.9.51",
-    "@types/webpack": "4.41.22"
-  }
+    "private": true,
+    "name": "permaculture-client",
+    "version": "0.0.0",
+    "dependencies": {
+        "@shopify/app-bridge": "1.27.2",
+        "@shopify/app-bridge-react": "1.27.2",
+        "@shopify/polaris": "5.5.0",
+        "@zeit/next-css": "1.0.1",
+        "apollo-boost": "0.4.9",
+        "graphql": "15.3.0",
+        "graphql-tag": "2.11.0",
+        "js-cookie": "2.2.1",
+        "next": "9.5.3",
+        "react": "16.13.1",
+        "react-apollo": "3.1.5",
+        "react-dom": "16.13.1",
+        "store-js": "2.0.4"
+    },
+    "devDependencies": {
+        "@types/js-cookie": "2.2.6",
+        "@types/node": "14.11.5",
+        "@types/react": "16.9.51",
+        "@types/webpack": "4.41.22"
+    }
 }
