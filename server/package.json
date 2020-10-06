@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "name": "permaculture-server",
+  "version": "0.0.0",
+  "dependencies": {
+    "@shopify/koa-shopify-auth": "3.1.70",
+    "@shopify/koa-shopify-graphql-proxy": "4.0.2",
+    "@shopify/koa-shopify-webhooks": "2.5.1",
+    "dotenv": "8.2.0",
+    "isomorphic-fetch": "3.0.0",
+    "koa": "2.13.0",
+    "koa-router": "9.4.0",
+    "koa-session": "6.0.0",
+    "next": "9.5.3"
+  },
+  "devDependencies": {
+    "@types/koa-router": "7.4.1",
+    "@types/koa-session": "5.10.3",
+    "@types/node": "14.11.5"
+  }
+}

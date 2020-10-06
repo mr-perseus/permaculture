@@ -1,8 +1,9 @@
 {
   "private": true,
-  "name": "shopify-demo-app-node-react",
-  "version": "1.0.0",
-  "main": "dist/index.js",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "engines": {
     "node": "^12.8.4",
     "npm": "^6.14.6",
@@ -23,11 +24,19 @@
     "proseWrap": "preserve",
     "endOfLine": "lf"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": "eslint --cache --fix"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon",
-    "build": "next build && tsc --project tsconfig.server.json",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "dev": "yarn workspace permaculture-server nodemon",
+    "build": "yarn workspace permaculture-client next build && yarn workspace permaculture-server tsc --project tsconfig.json",
+    "start": "yarn workspace permaculture-server cross-env NODE_ENV=production node dist/index.js",
     "ngrok": "ngrok http 3000",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
@@ -36,37 +45,10 @@
     "type": "git",
     "url": "git+https://github.com/mr-perseus/permaculture.git"
   },
-  "dependencies": {
-    "@shopify/app-bridge": "1.27.2",
-    "@shopify/app-bridge-react": "1.27.2",
-    "@shopify/koa-shopify-auth": "3.1.70",
-    "@shopify/koa-shopify-graphql-proxy": "4.0.2",
-    "@shopify/koa-shopify-webhooks": "2.5.1",
-    "@shopify/polaris": "5.4.0",
-    "@zeit/next-css": "1.0.1",
-    "apollo-boost": "0.4.9",
-    "dotenv": "8.2.0",
-    "graphql": "15.3.0",
-    "graphql-tag": "2.11.0",
-    "isomorphic-fetch": "3.0.0",
-    "js-cookie": "2.2.1",
-    "koa": "2.13.0",
-    "koa-router": "9.4.0",
-    "koa-session": "6.0.0",
-    "next": "9.5.3",
-    "react": "16.13.1",
-    "react-apollo": "3.1.5",
-    "react-dom": "16.13.1",
-    "store-js": "2.0.4"
-  },
   "devDependencies": {
-    "@types/js-cookie": "2.2.6",
-    "@types/koa-router": "7.4.1",
-    "@types/koa-session": "5.10.2",
-    "@types/node": "14.11.2",
-    "@types/react": "16.9.50",
-    "@typescript-eslint/eslint-plugin": "4.3.0",
-    "@typescript-eslint/parser": "4.3.0",
+    "@types/node": "14.11.5",
+    "@typescript-eslint/eslint-plugin": "4.4.0",
+    "@typescript-eslint/parser": "4.4.0",
     "cross-env": "7.0.2",
     "eslint": "7.10.0",
     "eslint-config-airbnb-typescript": "11.0.0",
@@ -74,8 +56,10 @@
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-jsx-a11y": "6.3.1",
     "eslint-plugin-prettier": "3.1.4",
-    "eslint-plugin-react": "7.21.2",
+    "eslint-plugin-react": "7.21.3",
     "eslint-plugin-react-hooks": "4.1.2",
+    "husky": "4.3.0",
+    "lint-staged": "10.4.0",
     "ngrok": "3.3.0",
     "nodemon": "2.0.4",
     "prettier": "2.1.2",

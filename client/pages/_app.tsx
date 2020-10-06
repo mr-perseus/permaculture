@@ -34,6 +34,7 @@ const MyApp: React.FC<AppPropsType> = ({
             </Head>
             <Provider config={config}>
                 <ClientRouter />
+                {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
                 <AppProvider i18n={translations}>
                     <ApolloProvider client={client}>
                         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
