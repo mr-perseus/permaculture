@@ -18,5 +18,7 @@ module.exports = {
 
         // TODO re-enable this rule
         'no-console': 'off',
+
+        'react/jsx-one-expression-per-line': 'off',
     },
 };
