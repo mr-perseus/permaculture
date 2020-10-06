@@ -11,7 +11,7 @@ import {
     receiveWebhook,
     registerWebhook,
 } from '@shopify/koa-shopify-webhooks';
-import { getSubscriptionUrl } from './getSubscriptionUrl';
+import getSubscriptionUrl from './getSubscriptionUrl';
 
 dotenv.config();
 

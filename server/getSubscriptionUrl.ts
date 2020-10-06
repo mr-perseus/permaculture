@@ -1,11 +1,15 @@
 import { Context } from 'koa';
 
-const getSubscriptionUrl = async (ctx: Context, accessToken: string, shop: string) => {
+const getSubscriptionUrl = async (
+    ctx: Context,
+    accessToken: string,
+    shop: string,
+): Promise<void> => {
     const query = JSON.stringify({
         query: `mutation {
       appSubscriptionCreate(
           name: "Super Duper Plan"
-          returnUrl: "${process.env.HOST}"
+          returnUrl: "${String(process.env.HOST)}"
           test: true
           lineItems: [
           {
@@ -49,9 +53,11 @@ const getSubscriptionUrl = async (ctx: Context, accessToken: string, shop: strin
         },
     );
 
-    const responseJson = await response.json();
+    const responseJson = (await response.json()) as {
+        data: { appSubscriptionCreate: { confirmationUrl: string } };
+    };
     const { confirmationUrl } = responseJson.data.appSubscriptionCreate;
     return ctx.redirect(confirmationUrl);
 };
 
-export { getSubscriptionUrl };
+export default getSubscriptionUrl;

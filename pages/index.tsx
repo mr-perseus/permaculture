@@ -1,63 +1,60 @@
 import { EmptyState, Layout, Page } from '@shopify/polaris';
 import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
-import React from 'react';
+import React, { useState } from 'react';
 import { SelectPayload } from '@shopify/app-bridge/actions/ResourcePicker';
 import ResourceListWithProducts from '../components/ResourceList';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
-class Index extends React.Component {
-    state = { open: false };
+const Index: React.FC = () => {
+    const [open, setOpen] = useState<boolean>(false);
 
-    render() {
-        const emptyState = !store.get('ids');
-        return (
-            <Page>
-                <TitleBar
-                    title="Sample App"
-                    primaryAction={{
-                        content: 'Select products',
-                        onAction: () => this.setState({ open: true }),
-                    }}
-                />
-                <ResourcePicker
-                    resourceType="Product"
-                    showVariants={false}
-                    open={this.state.open}
-                    onSelection={(resources) => this.handleSelection(resources)}
-                    onCancel={() => this.setState({ open: false })}
-                />
-                {emptyState ? (
-                    <Layout>
-                        <EmptyState
-                            heading="Discount your products temporarily"
-                            action={{
-                                content: 'Select products',
-                                onAction: () => this.setState({ open: true }),
-                            }}
-                            image={img}
-                        >
-                            <p>
-                                Select products to change their price
-                                temporarily.
-                            </p>
-                        </EmptyState>
-                    </Layout>
-                ) : (
-                    <ResourceListWithProducts />
-                )}
-            </Page>
-        );
-    }
-
-    handleSelection = (resources: SelectPayload) => {
+    const handleSelection = (resources: SelectPayload) => {
         const idsFromResources = resources.selection.map(
             (product) => product.id,
         );
-        this.setState({ open: false });
+        setOpen(false);
         store.set('ids', idsFromResources);
     };
-}
+
+    const emptyState = !store.get('ids');
+    return (
+        <Page>
+            <TitleBar
+                title="Sample App"
+                primaryAction={{
+                    content: 'Select products',
+                    onAction: () => setOpen(true),
+                }}
+            />
+            <ResourcePicker
+                resourceType="Product"
+                showVariants={false}
+                open={open}
+                onSelection={(resources) => handleSelection(resources)}
+                onCancel={() => setOpen(false)}
+            />
+            {emptyState ? (
+                <Layout>
+                    <EmptyState
+                        heading="Discount your products temporarily"
+                        action={{
+                            content: 'Select products',
+                            onAction: () => setOpen(true),
+                        }}
+                        image={img}
+                    >
+                        <p>
+                            Select products to change their price temporarily.
+                        </p>
+                    </EmptyState>
+                </Layout>
+            ) : (
+                <ResourceListWithProducts />
+            )}
+        </Page>
+    );
+};
 
 export default Index;
