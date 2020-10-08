@@ -39,7 +39,10 @@
         "start": "yarn workspace permaculture-server cross-env NODE_ENV=production node dist/index.js",
         "ngrok": "ngrok http 3000",
         "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-        "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+        "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+        "clean": "del-cli .next client/.next server/dist",
+        "full-clean": "yarn clean && del-cli server/node_modules client/node_modules && del-cli node_modules",
+        "startNgrok": "ngrok start permaculture -region=eu"
     },
     "repository": {
         "type": "git",
@@ -50,6 +53,7 @@
         "@typescript-eslint/eslint-plugin": "4.4.0",
         "@typescript-eslint/parser": "4.4.0",
         "cross-env": "7.0.2",
+        "del-cli": "3.0.1",
         "eslint": "7.10.0",
         "eslint-config-airbnb-typescript": "11.0.0",
         "eslint-config-prettier": "6.12.0",
