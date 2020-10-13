@@ -50,5 +50,7 @@ module.exports = {
         'prettier/prettier': ['warn'],
         'no-secrets/no-secrets': 'error',
         'import/no-unresolved': 'error',
+        '@typescript-eslint/prefer-optional-chain': 'error',
+        'class-methods-use-this': 'off',
     },
 };
