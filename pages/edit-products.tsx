@@ -63,7 +63,7 @@ const EditProduct: React.FC = () => {
                 const showError = error && (
                     <Banner status="critical">{error.message}</Banner>
                 );
-                const updatedShowToast = data && data.productVariantUpdate && (
+                const updatedShowToast = data?.productVariantUpdate && (
                     <Toast
                         content="Sucessfully updated"
                         onDismiss={() => setShowToast(false)}

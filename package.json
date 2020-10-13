@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "main": "dist/index.js",
     "engines": {
-        "node": "^12.8.4",
+        "node": "12",
         "npm": "^6.14.6",
         "yarn": "^1.22.4"
     },
@@ -28,11 +28,23 @@
             "pre-commit": "lint-staged"
         }
     },
+    "jest": {
+        "transform": {
+            ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+        },
+        "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js"
+        ]
+    },
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": "eslint --cache --fix"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "downloadSchema": "./downloadShopifyGraphqlSchema.js",
+        "test": "jest",
         "dev": "nodemon",
         "build": "next build && tsc --project tsconfig.server.json",
         "start": "cross-env NODE_ENV=production node dist/index.js",
@@ -53,8 +65,7 @@
         "@shopify/koa-shopify-auth": "3.1.70",
         "@shopify/koa-shopify-graphql-proxy": "4.0.2",
         "@shopify/koa-shopify-webhooks": "2.5.1",
-        "@shopify/polaris": "5.5.0",
-        "@zeit/next-css": "1.0.1",
+        "@shopify/polaris": "5.6.1",
         "apollo-boost": "0.4.9",
         "dotenv": "8.2.0",
         "graphql": "15.3.0",
@@ -63,40 +74,49 @@
         "js-cookie": "2.2.1",
         "koa": "2.13.0",
         "koa-router": "9.4.0",
-        "koa-session": "6.0.0",
-        "next": "9.5.3",
+        "koa-session": "6.1.0",
+        "next": "9.5.5",
         "react": "16.13.1",
         "react-apollo": "3.1.5",
         "react-dom": "16.13.1",
         "store-js": "2.0.4"
     },
     "devDependencies": {
+        "@types/jest": "26.0.14",
         "@types/js-cookie": "2.2.6",
         "@types/koa-router": "7.4.1",
         "@types/koa-session": "5.10.3",
-        "@types/node": "14.11.5",
-        "@types/react": "16.9.51",
+        "@types/node": "12.12.67",
+        "@types/react": "16.9.52",
         "@types/webpack": "4.41.22",
-        "@typescript-eslint/eslint-plugin": "4.4.0",
-        "@typescript-eslint/parser": "4.4.0",
+        "@typescript-eslint/eslint-plugin": "4.4.1",
+        "@typescript-eslint/parser": "4.4.1",
+        "@zeit/next-css": "1.0.1",
         "cross-env": "7.0.2",
         "del-cli": "3.0.1",
-        "eslint": "7.10.0",
+        "eslint": "7.11.0",
         "eslint-config-airbnb-typescript": "11.0.0",
         "eslint-config-prettier": "6.12.0",
+        "eslint-import-resolver-typescript": "2.3.0",
+        "eslint-plugin-eslint-comments": "3.2.0",
         "eslint-plugin-import": "2.22.1",
+        "eslint-plugin-jest": "24.0.2",
         "eslint-plugin-jsx-a11y": "6.3.1",
         "eslint-plugin-no-secrets": "0.6.8",
         "eslint-plugin-prettier": "3.1.4",
-        "eslint-plugin-react": "7.21.3",
+        "eslint-plugin-promise": "4.2.1",
+        "eslint-plugin-react": "7.21.4",
         "eslint-plugin-react-hooks": "4.1.2",
         "eslint-plugin-security": "1.4.0",
         "husky": "4.3.0",
+        "jest": "26.5.3",
         "lint-staged": "10.4.0",
         "ngrok": "3.3.0",
         "nodemon": "2.0.4",
         "prettier": "2.1.2",
+        "ts-jest": "26.4.1",
         "ts-node": "9.0.0",
-        "typescript": "4.0.3"
+        "typescript": "4.0.3",
+        "webpack": "4.44.2"
     }
 }
