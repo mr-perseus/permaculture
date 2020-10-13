@@ -29,6 +29,7 @@ if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET_KEY || !HOST) {
 }
 
 app.prepare()
+    // eslint-disable-next-line promise/always-return
     .then(() => {
         const server = new Koa();
         const router = new Router();
@@ -94,6 +95,6 @@ app.prepare()
             console.log(`> Ready on http://localhost:${port}`);
         });
     })
-    .catch(() => {
-        // TODO
+    .catch((e) => {
+        throw e;
     });

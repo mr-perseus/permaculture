@@ -4,6 +4,15 @@ module.exports = {
         'airbnb/hooks',
         'plugin:@typescript-eslint/recommended',
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
+        'plugin:import/errors',
+        'plugin:import/warnings',
+        'plugin:import/typescript',
+        'plugin:eslint-comments/recommended',
+        'plugin:promise/recommended',
+        'plugin:jest/recommended',
+        'plugin:jest/style',
+        'prettier',
+        'prettier/react',
         'prettier/@typescript-eslint',
         'plugin:prettier/recommended',
         'plugin:security/recommended',
@@ -12,17 +21,34 @@ module.exports = {
     parserOptions: {
         project: './tsconfig.json',
     },
-    plugins: ['@typescript-eslint', 'prettier', 'security', 'no-secrets'],
+    env: {
+        browser: true,
+        es6: true,
+    },
+    plugins: [
+        'react',
+        'react-hooks',
+        '@typescript-eslint',
+        'prettier',
+        'import',
+        'promise',
+        'jest',
+        'security',
+        'no-secrets',
+    ],
+    settings: {
+        'import/parsers': {
+            '@typescript-eslint/parser': ['.ts', '.tsx'],
+        },
+        'import/resolver': {
+            typescript: {
+                alwaysTryTypes: true,
+            },
+        },
+    },
     rules: {
         'prettier/prettier': ['warn'],
-        'react/jsx-indent': ['warn', 4],
-        'react/jsx-indent-props': ['warn', 4],
-        'react/jsx-one-expression-per-line': 'off',
-
-        // See https://github.com/nickdeis/eslint-plugin-no-secrets
         'no-secrets/no-secrets': 'error',
-
-        // TODO re-enable this rule
-        'no-console': 'off',
+        'import/no-unresolved': 'error',
     },
 };

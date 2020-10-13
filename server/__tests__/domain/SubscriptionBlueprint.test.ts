@@ -1,14 +1,10 @@
-/* eslint-disable */
-/// <reference types="jest" />
+import SubscriptionBlueprint from '../../domain/SubscriptionBlueprint';
+import ShopifyService from '../../domain/ShopifyService';
+import SubscriptionContext from '../../domain/SubscriptionContext';
 
-import SubscriptionBlueprint from "../../domain/SubscriptionBlueprint";
-import ShopifyService from "../../domain/ShopifyService";
-import SubscriptionContext from "../../domain/SubscriptionContext";
+let blueprint: SubscriptionBlueprint | undefined;
 
-let blueprint: SubscriptionBlueprint | undefined = undefined;
-
-
-test('test basic fields', () => {
+test('basic fields', () => {
     blueprint = new SubscriptionBlueprint('title');
     expect(blueprint.title).toBe('title');
     expect(blueprint.productId).toBe('');
@@ -22,15 +18,15 @@ test('test basic fields', () => {
     expect(blueprint.productId).toBe('1');
 });
 
-test('test create product', async () => {
+test('create product', async () => {
     blueprint = new SubscriptionBlueprint('title');
     const serviceMock: ShopifyService = {
         async createProduct(): Promise<string> {
             return Promise.resolve('3');
-        }
-    }
-    const contextMock: SubscriptionContext = {accessToken: '', shop: ''}
-    
+        },
+    };
+    const contextMock: SubscriptionContext = { accessToken: '', shop: '' };
+
     blueprint.setContextAndServices(serviceMock, contextMock);
     await blueprint.createShopifyProduct();
     expect(blueprint.productId).toBe('3');
@@ -38,6 +34,5 @@ test('test create product', async () => {
 
 test('product creation without service injection failes', async () => {
     blueprint = new SubscriptionBlueprint('title');
-    await expect(blueprint.createShopifyProduct).rejects.toThrowError();
+    await expect(blueprint.createShopifyProduct()).rejects.toThrow();
 });
-
