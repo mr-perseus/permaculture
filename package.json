@@ -60,6 +60,7 @@
         "url": "git+https://github.com/mr-perseus/permaculture.git"
     },
     "dependencies": {
+        "@reduxjs/toolkit": "1.4.0",
         "@shopify/app-bridge": "1.27.2",
         "@shopify/app-bridge-react": "1.27.2",
         "@shopify/koa-shopify-auth": "3.1.70",
@@ -80,6 +81,8 @@
         "react": "16.13.1",
         "react-apollo": "3.1.5",
         "react-dom": "16.13.1",
+        "react-redux": "7.2.1",
+        "redux": "4.0.5",
         "store-js": "2.0.4"
     },
     "devDependencies": {
@@ -89,6 +92,7 @@
         "@types/koa-session": "5.10.3",
         "@types/node": "12.12.67",
         "@types/react": "16.9.52",
+        "@types/react-redux": "7.1.9",
         "@types/webpack": "4.41.22",
         "@typescript-eslint/eslint-plugin": "4.4.1",
         "@typescript-eslint/parser": "4.4.1",
