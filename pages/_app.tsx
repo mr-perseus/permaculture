@@ -2,7 +2,6 @@ import Head from 'next/head';
 import { AppProvider } from '@shopify/polaris';
 import { Provider } from '@shopify/app-bridge-react';
 import { Provider as ReduxProvider } from 'react-redux';
-import store from '../store';
 import Cookies from 'js-cookie';
 import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
@@ -10,6 +9,7 @@ import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
 import React from 'react';
 import { AppPropsType } from 'next/dist/next-server/lib/utils';
+import store from '../store';
 import ClientRouter from '../components/ClientRouter';
 
 const client = new ApolloClient({

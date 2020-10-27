@@ -3,13 +3,14 @@ import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
 import React, { useState } from 'react';
 import { SelectPayload } from '@shopify/app-bridge/actions/ResourcePicker';
-import ResourceListWithProducts from '../components/ResourceList';
 import { useDispatch } from 'react-redux';
+import ResourceListWithProducts from '../components/ResourceList';
 
 import Clock from '../components/clock';
 import Counter from '../components/counter';
 import { tick } from '../lib/slices/clockSlice';
 import useInterval from '../lib/useInterval';
+
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
 const Index: React.FC = () => {

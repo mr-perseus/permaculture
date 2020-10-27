@@ -48,11 +48,11 @@
         "dev": "nodemon",
         "build": "next build && tsc --project tsconfig.server.json",
         "start": "node dist/index.js",
-        "ngrok": "ngrok http 3000",
+        "ngrok": "ngrok start permaculture -region=eu",
         "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
         "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-        "clean": "del-cli .next client/.next server/dist",
-        "full-clean": "yarn clean && del-cli server/node_modules client/node_modules && del-cli node_modules",
+        "clean": "del-cli .next dist",
+        "full-clean": "yarn clean && del-cli node_modules",
         "startNgrok": "ngrok start permaculture -region=eu"
     },
     "repository": {
