@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import { AppProvider } from '@shopify/polaris';
 import { Provider } from '@shopify/app-bridge-react';
+import { Provider as ReduxProvider } from 'react-redux';
+import store from '../store';
 import Cookies from 'js-cookie';
 import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
@@ -27,7 +29,7 @@ const MyApp: React.FC<AppPropsType> = ({
     };
 
     return (
-        <>
+        <ReduxProvider store={store}>
             <Head>
                 <title>Sample App</title>
                 <meta charSet="utf-8" />
@@ -42,7 +44,7 @@ const MyApp: React.FC<AppPropsType> = ({
                     </ApolloProvider>
                 </AppProvider>
             </Provider>
-        </>
+        </ReduxProvider>
     );
 };
 
