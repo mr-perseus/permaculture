@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import ResourceListWithProducts from '../components/ResourceList';
 
 import Clock from '../components/clock';
-import Counter from '../components/counter';
 import { tick } from '../lib/slices/clockSlice';
 import useInterval from '../lib/useInterval';
 
@@ -34,7 +33,6 @@ const Index: React.FC = () => {
     return (
         <div>
             <Clock />
-            <Counter />
             <Page>
                 <TitleBar
                     title="Sample App"

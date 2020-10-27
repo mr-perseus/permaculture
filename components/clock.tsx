@@ -1,13 +1,13 @@
 import { useSelector } from 'react-redux';
 
+import React from 'react';
 import { selectClock } from '../lib/slices/clockSlice';
 
-const formatTime = (time: any) => {
-    // cut off except hh:mm:ss
+const formatTime = (time: number) => {
     return new Date(time).toJSON().slice(11, 19);
 };
 
-const Clock = () => {
+const Clock: React.FC = () => {
     const { lastUpdate, light } = useSelector(selectClock);
 
     return (

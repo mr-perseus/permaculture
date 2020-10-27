@@ -1,4 +1,9 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+interface ClockState {
+    lastUpdate: number;
+    light: boolean;
+}
 
 const clockSlice = createSlice({
     name: 'clock',
@@ -7,14 +12,17 @@ const clockSlice = createSlice({
         light: true,
     },
     reducers: {
-        tick: (state, action) => {
+        tick: (state, action: PayloadAction<ClockState>) => {
+            /* eslint-disable no-param-reassign */
             state.lastUpdate = action.payload.lastUpdate;
-            state.light = !!action.payload.light;
+            state.light = Boolean(action.payload.light);
+            /* eslint-enable no-param-reassign */
         },
     },
 });
 
-export const selectClock = (state: any) => state.clock;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return,@typescript-eslint/explicit-module-boundary-types
+export const selectClock = (state: any): ClockState => state.clock;
 
 export const { tick } = clockSlice.actions;
 
