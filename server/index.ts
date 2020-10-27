@@ -53,6 +53,8 @@ app.prepare()
                         topic: 'PRODUCTS_CREATE',
                         accessToken: String(accessToken),
                         shop: String(shop),
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore
                         apiVersion: ApiVersion.July20,
                         deliveryMethod: DeliveryMethod.Http,
                     });
