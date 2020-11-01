@@ -3,11 +3,22 @@ import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
 import React, { useState } from 'react';
 import { SelectPayload } from '@shopify/app-bridge/actions/ResourcePicker';
+import { useDispatch } from 'react-redux';
 import ResourceListWithProducts from '../components/ResourceList';
+
+import Clock from '../components/clock';
+import { tick } from '../lib/slices/clockSlice';
+import useInterval from '../lib/useInterval';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
 const Index: React.FC = () => {
+    const dispatch = useDispatch();
+    // Tick the time every second
+    useInterval(() => {
+        dispatch(tick({ light: true, lastUpdate: Date.now() }));
+    }, 1000);
+
     const [open, setOpen] = useState<boolean>(false);
 
     const handleSelection = (resources: SelectPayload) => {
@@ -20,40 +31,44 @@ const Index: React.FC = () => {
 
     const emptyState = !store.get('ids');
     return (
-        <Page>
-            <TitleBar
-                title="Sample App"
-                primaryAction={{
-                    content: 'Select products',
-                    onAction: () => setOpen(true),
-                }}
-            />
-            <ResourcePicker
-                resourceType="Product"
-                showVariants={false}
-                open={open}
-                onSelection={(resources) => handleSelection(resources)}
-                onCancel={() => setOpen(false)}
-            />
-            {emptyState ? (
-                <Layout>
-                    <EmptyState
-                        heading="Discount your products temporarily"
-                        action={{
-                            content: 'Select products',
-                            onAction: () => setOpen(true),
-                        }}
-                        image={img}
-                    >
-                        <p>
-                            Select products to change their price temporarily.
-                        </p>
-                    </EmptyState>
-                </Layout>
-            ) : (
-                <ResourceListWithProducts />
-            )}
-        </Page>
+        <div>
+            <Clock />
+            <Page>
+                <TitleBar
+                    title="Sample App"
+                    primaryAction={{
+                        content: 'Select products',
+                        onAction: () => setOpen(true),
+                    }}
+                />
+                <ResourcePicker
+                    resourceType="Product"
+                    showVariants={false}
+                    open={open}
+                    onSelection={(resources) => handleSelection(resources)}
+                    onCancel={() => setOpen(false)}
+                />
+                {emptyState ? (
+                    <Layout>
+                        <EmptyState
+                            heading="Discount your products temporarily"
+                            action={{
+                                content: 'Select products',
+                                onAction: () => setOpen(true),
+                            }}
+                            image={img}
+                        >
+                            <p>
+                                Select products to change their price
+                                temporarily.
+                            </p>
+                        </EmptyState>
+                    </Layout>
+                ) : (
+                    <ResourceListWithProducts />
+                )}
+            </Page>
+        </div>
     );
 };
 
