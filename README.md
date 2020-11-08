@@ -35,7 +35,4 @@ therefore it is necessary to rely upon the OAuth authentication process
 \**  There are other options instead of using the IntelliJ plugin. One example:
 ```
 npx graphql-js-schema-fetch --url 'https://{store-id}.myshopify.com/admin/api/2020-10/graphql.json' --header 'X-Shopify-Access-Token: {access-token}' > shopify-schema.json
-``` 
-
-
-
+```
