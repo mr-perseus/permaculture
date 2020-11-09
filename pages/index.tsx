@@ -1,75 +1,114 @@
-import { EmptyState, Layout, Page } from '@shopify/polaris';
-import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
-import store from 'store-js';
-import React, { useState } from 'react';
-import { SelectPayload } from '@shopify/app-bridge/actions/ResourcePicker';
-import { useDispatch } from 'react-redux';
-import ResourceListWithProducts from '../components/ResourceList';
-
-import Clock from '../components/clock';
-import { tick } from '../lib/slices/clockSlice';
-import useInterval from '../lib/useInterval';
+import React from 'react';
+import { gql } from 'apollo-boost';
+import { Query, QueryResult } from 'react-apollo';
+import { useRouter } from 'next/router';
+import {
+    Card,
+    EmptyState,
+    ResourceItem,
+    ResourceList,
+    TextStyle,
+} from '@shopify/polaris';
+import { gidToId } from '../lib/utils';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
-const Index: React.FC = () => {
-    const dispatch = useDispatch();
-    // Tick the time every second
-    useInterval(() => {
-        dispatch(tick({ light: true, lastUpdate: Date.now() }));
-    }, 1000);
+const GET_SUBSCRIPTIONS = gql`
+    query {
+        products(first: 10) {
+            edges {
+                node {
+                    id
+                    title
+                }
+            }
+        }
+    }
+`;
 
-    const [open, setOpen] = useState<boolean>(false);
-
-    const handleSelection = (resources: SelectPayload) => {
-        const idsFromResources = resources.selection.map(
-            (product) => product.id,
-        );
-        setOpen(false);
-        store.set('ids', idsFromResources);
+type ProductsResult = {
+    products: {
+        edges: {
+            node: ProductResult;
+        }[];
     };
+};
 
-    const emptyState = !store.get('ids');
+type ProductResult = {
+    id: string;
+    title: string;
+};
+
+const Subscriptions = ({
+    products,
+}: {
+    products: ProductResult[];
+}): React.ReactElement => {
+    const router = useRouter();
+
     return (
-        <div>
-            <Clock />
-            <Page>
-                <TitleBar
-                    title="Sample App"
-                    primaryAction={{
-                        content: 'Select products',
-                        onAction: () => setOpen(true),
+        <>
+            {products.length !== 0 ? (
+                <Card>
+                    <ResourceList
+                        items={products}
+                        renderItem={(product: ProductResult) => {
+                            const id = gidToId(product.id);
+                            return (
+                                <ResourceItem
+                                    id={id}
+                                    url={`/subscriptions/${id}`}
+                                    accessibilityLabel={`View details for ${product.title}`}
+                                >
+                                    <h3>
+                                        <TextStyle variation="strong">
+                                            {product.title}
+                                        </TextStyle>
+                                    </h3>
+                                </ResourceItem>
+                            );
+                        }}
+                    />
+                </Card>
+            ) : (
+                <EmptyState
+                    heading="Create subscriptions"
+                    action={{
+                        content: 'Create subscription',
+                        onAction() {
+                            // eslint-disable-next-line no-void
+                            void router.push('/subscriptions/new');
+                        },
                     }}
-                />
-                <ResourcePicker
-                    resourceType="Product"
-                    showVariants={false}
-                    open={open}
-                    onSelection={(resources) => handleSelection(resources)}
-                    onCancel={() => setOpen(false)}
-                />
-                {emptyState ? (
-                    <Layout>
-                        <EmptyState
-                            heading="Discount your products temporarily"
-                            action={{
-                                content: 'Select products',
-                                onAction: () => setOpen(true),
-                            }}
-                            image={img}
-                        >
-                            <p>
-                                Select products to change their price
-                                temporarily.
-                            </p>
-                        </EmptyState>
-                    </Layout>
-                ) : (
-                    <ResourceListWithProducts />
-                )}
-            </Page>
-        </div>
+                    image={img}
+                >
+                    <p>
+                        Select products that should be available as
+                        subscriptions
+                    </p>
+                </EmptyState>
+            )}
+        </>
     );
 };
 
-export default Index;
+// todo at the moment these are products but it should be subscriptions
+const IndexPage = (): React.ReactElement => {
+    return (
+        <Query query={GET_SUBSCRIPTIONS}>
+            {({ loading, error, data }: QueryResult<ProductsResult>) => {
+                if (loading) return <div>Loading...</div>;
+                if (error) return <div>Error...</div>;
+                if (!data?.products?.edges)
+                    return <div>Failed loading subscriptions</div>;
+                return (
+                    <Subscriptions
+                        products={data.products.edges.map((edge) => edge.node)}
+                    />
+                );
+            }}
+        </Query>
+    );
+};
+
+export default IndexPage;
