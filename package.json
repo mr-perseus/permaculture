@@ -61,7 +61,6 @@
     },
     "dependencies": {
         "@nano-sql/core": "2.3.7",
-        "@reduxjs/toolkit": "1.4.0",
         "@shopify/app-bridge": "1.27.2",
         "@shopify/app-bridge-react": "1.27.2",
         "@shopify/koa-shopify-auth": "3.1.72",
@@ -86,8 +85,6 @@
         "react": "16.14.0",
         "react-apollo": "3.1.5",
         "react-dom": "16.14.0",
-        "react-redux": "7.2.2",
-        "redux": "4.0.5",
         "store-js": "2.0.4"
     },
     "devDependencies": {

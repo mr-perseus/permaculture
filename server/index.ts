@@ -60,8 +60,10 @@ app.prepare()
                     });
 
                     if (registration.success) {
+                        // eslint-disable-next-line no-console
                         console.log('Successfully registered webhook!');
                     } else {
+                        // eslint-disable-next-line no-console
                         console.log(
                             'Failed to register webhook',
                             registration.result,
@@ -78,11 +80,12 @@ app.prepare()
             '/webhooks/products/create',
             webhook,
             (ctx: ParameterizedContext) => {
+                // eslint-disable-next-line no-console
                 console.log('received webhook: ', ctx.state.webhook);
             },
         );
 
-        server.use(graphQLProxy({ version: ApiVersion.July20 }));
+        server.use(graphQLProxy({ version: ApiVersion.October20 }));
 
         router.get('(.*)', verifyRequest(), async (ctx) => {
             await handle(ctx.req, ctx.res);
@@ -94,6 +97,7 @@ app.prepare()
         server.use(router.routes());
 
         server.listen(port, () => {
+            // eslint-disable-next-line no-console
             console.log(`> Ready on http://localhost:${port}`);
         });
     })
