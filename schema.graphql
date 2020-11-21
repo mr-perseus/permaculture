@@ -358,6 +358,14 @@ interface Publishable {
     ): PublicationConnection!
 }
 
+"Represents selling plan pricing policy common fields."
+interface SellingPlanPricingPolicyBase {
+    "The price adjustment type."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType!
+    "The price adjustment value."
+    adjustmentValue: SellingPlanPricingPolicyAdjustmentValue!
+}
+
 "The charge descriptors for a payments account."
 interface ShopifyPaymentsChargeStatementDescriptor {
     "The default charge statement descriptor."
@@ -371,6 +379,9 @@ union AppPricingDetails = AppRecurringPricing | AppUsagePricing
 
 "The main embed of a comment event."
 union CommentEventEmbed = Customer | DraftOrder | Order | Product | ProductVariant
+
+"All possible instruments for CustomerPaymentMethods."
+union CustomerPaymentInstrument = CustomerCreditCard
 
 "The criteria (weight or price) that the field must meet based on the operator."
 union DeliveryConditionCriteria = MoneyV2 | Weight
@@ -419,6 +430,30 @@ union PriceRuleValue = PriceRuleFixedAmountValue | PriceRulePercentValue
 
 "The value of the pricing object."
 union PricingValue = MoneyV2 | PricingPercentageValue
+
+"Represents the type of a selling plan billing policy."
+union SellingPlanBillingPolicy = SellingPlanRecurringBillingPolicy
+
+"Represents the type of a selling plan delivery policy."
+union SellingPlanDeliveryPolicy = SellingPlanRecurringDeliveryPolicy
+
+"Represents the type of a selling plan pricing policy."
+union SellingPlanPricingPolicy = SellingPlanFixedPricingPolicy | SellingPlanRecurringPricingPolicy
+
+"Represents a selling plan pricing policy adjustment value type."
+union SellingPlanPricingPolicyAdjustmentValue = MoneyV2 | SellingPlanPricingPolicyPercentageValue
+
+"Describes the delivery method to use to get the physical goods to the customer."
+union SubscriptionDeliveryMethod = SubscriptionDeliveryMethodShipping
+
+"Subscription draft discount types."
+union SubscriptionDiscount = SubscriptionAppliedCodeDiscount | SubscriptionManualDiscount
+
+"The value of the discount and how it will be applied."
+union SubscriptionDiscountValue = SubscriptionDiscountFixedAmountValue | SubscriptionDiscountPercentageValue
+
+"The result of the query to fetch shipping options for the subscription contract."
+union SubscriptionShippingOptionResult = SubscriptionShippingOptionResultFailure | SubscriptionShippingOptionResultSuccess
 
 "Information about the payment instrument used for this transaction."
 union TenderTransactionDetails = TenderTransactionCreditCardDetails
@@ -914,6 +949,16 @@ type BasicEvent implements Event & Node {
     message: FormattedString!
 }
 
+"Represents an error that happens during the execution of a billing attempt mutation."
+type BillingAttemptUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: BillingAttemptUserErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
+}
+
 """
 
 An asynchronous long-running operation to fetch data in bulk.
@@ -1368,8 +1413,8 @@ type CalculatedScriptDiscountApplication implements CalculatedDiscountApplicatio
 
 """
 
-A channel is a group of products and collections that is published to an app. A channel can be a platform or marketplace such
-as Facebook or Pinterest, an online store, or POS.
+A channel represents an app where you sell a group of products and collections.
+A channel can be a platform or marketplace such as Facebook or Pinterest, an online store, or POS.
 """
 type Channel implements Node {
     "Underlying app used by the channel."
@@ -1514,6 +1559,8 @@ type Collection implements HasMetafields & HasPublishedTranslations & Node & Pub
         "Image size multiplier for high-resolution retina displays. Must be between 1 and 3. This argument is deprecated: Use `scale` on `Image.transformedSrc` instead."
         scale: Int = 1
     ): Image
+    "The ID of the corresponding resource in the REST Admin API."
+    legacyResourceId: UnsignedInt64!
     "The metafield associated with the resource."
     metafield(
         "Identifier for the metafield (maximum of 30 characters)."
@@ -2185,6 +2232,21 @@ type Customer implements CommentEventSubject & HasEvents & HasMetafields & Legac
     The number of orders that the customer has made at the store in their lifetime.
     """
     ordersCount: UnsignedInt64!
+    "A list of the customer's payment methods."
+    paymentMethods(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false,
+        "Whether to show the customer's revoked payment method."
+        showRevoked: Boolean = false
+    ): CustomerPaymentMethodConnection!
     "The customer's phone number."
     phone: String
     "Returns a private metafield found by namespace and key."
@@ -2209,8 +2271,23 @@ type Customer implements CommentEventSubject & HasEvents & HasMetafields & Legac
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): PrivateMetafieldConnection!
+    "Possible subscriber states of a customer defined by their subscription contracts."
+    productSubscriberStatus: CustomerProductSubscriberStatus!
     "The state of the customer's account with the shop."
     state: CustomerState!
+    "A list of the customer's subscription contracts."
+    subscriptionContracts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionContractConnection!
     "A comma separated list of tags that have been added to the customer."
     tags: [String!]!
     "Whether the customer is exempt from being charged taxes on their orders."
@@ -2254,6 +2331,56 @@ type CustomerCreatePayload {
     customer: Customer
     "List of errors that occurred executing the mutation."
     userErrors: [UserError!]!
+}
+
+"Represents a card instrument for customer payment method."
+type CustomerCreditCard {
+    "The billing address of the card."
+    billingAddress: CustomerCreditCardBillingAddress
+    "The brand of the card."
+    brand: String!
+    "Whether the card is about to expire."
+    expiresSoon: Boolean!
+    "The expiry month of the card."
+    expiryMonth: Int!
+    "The expiry year of the card."
+    expiryYear: Int!
+    "The card's BIN number."
+    firstDigits: String
+    "The payment method can be revoked if there are no active subscription contracts."
+    isRevocable: Boolean!
+    "The last 4 digits of the card."
+    lastDigits: String!
+    "The masked card number with only the last 4 digits displayed."
+    maskedNumber: String!
+    "The name of the card holder."
+    name: String!
+}
+
+"The billing address of a credit card payment instrument."
+type CustomerCreditCardBillingAddress {
+    "The first line of the address. Typically the street address or PO Box number."
+    address1: String
+    "The name of the city, district, village, or town."
+    city: String
+    "The name of the country."
+    country: String
+    """
+
+    The two-letter code for the country of the address.
+    For example, US.
+    """
+    countryCode: CountryCode
+    "The region of the address, such as the province, state, or district."
+    province: String
+    """
+
+    The two-letter code for the region.
+    For example, ON.
+    """
+    provinceCode: String
+    "The zip or postal code of the address."
+    zip: String
 }
 
 "Return type for `customerDelete` mutation."
@@ -2336,6 +2463,95 @@ type CustomerMomentEdge {
     cursor: String!
     "The item at the end of CustomerMomentEdge."
     node: CustomerMoment!
+}
+
+"A customer's payment method."
+type CustomerPaymentMethod implements Node {
+    "The customer to whom the payment method belongs."
+    customer: Customer
+    "The ID of this payment method."
+    id: ID!
+    "The instrument for this payment method."
+    instrument: CustomerPaymentInstrument
+    "The time that the payment method was revoked."
+    revokedAt: DateTime
+    "List Subscription Contracts."
+    subscriptionContracts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionContractConnection!
+}
+
+type CustomerPaymentMethodConnection {
+    "A list of edges."
+    edges: [CustomerPaymentMethodEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+"Return type for `customerPaymentMethodCreditCardCreate` mutation."
+type CustomerPaymentMethodCreditCardCreatePayload {
+    "The customer payment method."
+    customerPaymentMethod: CustomerPaymentMethod
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Return type for `customerPaymentMethodCreditCardUpdate` mutation."
+type CustomerPaymentMethodCreditCardUpdatePayload {
+    "The customer payment method."
+    customerPaymentMethod: CustomerPaymentMethod
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+type CustomerPaymentMethodEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of CustomerPaymentMethodEdge."
+    node: CustomerPaymentMethod!
+}
+
+"Return type for `customerPaymentMethodRemoteCreditCardCreate` mutation."
+type CustomerPaymentMethodRemoteCreditCardCreatePayload {
+    "The customer payment method."
+    customerPaymentMethod: CustomerPaymentMethod
+    "List of errors that occurred executing the mutation."
+    userErrors: [CustomerPaymentMethodUserError!]!
+}
+
+"Return type for `customerPaymentMethodRevoke` mutation."
+type CustomerPaymentMethodRevokePayload {
+    "The ID of the revoked customer payment method."
+    revokedCustomerPaymentMethodId: ID
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Return type for `customerPaymentMethodSendUpdateEmail` mutation."
+type CustomerPaymentMethodSendUpdateEmailPayload {
+    "The customer to whom an update payment method email was sent."
+    customer: Customer
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Represents an error in the input of a mutation."
+type CustomerPaymentMethodUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: CustomerPaymentMethodUserErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
 }
 
 "Return type for `customerRemoveTaxExemptions` mutation."
@@ -2735,6 +2951,19 @@ type DeliveryProfile implements Node {
     ): DeliveryProfileItemConnection!
     "The location groups and associated zones using this profile."
     profileLocationGroups: [DeliveryProfileLocationGroup!]!
+    "Selling Plan Groups associated with the specified Delivery Profile."
+    sellingPlanGroups(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SellingPlanGroupConnection!
     "List of locations that have not been assigned to a location group for this profile."
     unassignedLocations: [Location!]!
     "The number of countries with active rates to deliver to."
@@ -3186,6 +3415,8 @@ type DiscountCodeBasic {
     hasTimelineComment: Boolean!
     "The minimum subtotal or quantity that's required for the discount to be applied."
     minimumRequirement: DiscountMinimumRequirement
+    "The number of times a discount applies on recurring purchases (subscriptions)."
+    recurringCycleLimit: Int
     "URLs that can be used to share the discount."
     shareableUrls: [DiscountShareableUrl!]!
     "A short summary of the discount."
@@ -3346,6 +3577,10 @@ type DiscountCodeDeletePayload {
 
 "A free shipping code discount."
 type DiscountCodeFreeShipping {
+    "Whether the discount applies on regular one-time-purchase shipping lines."
+    appliesOnOneTimePurchase: Boolean!
+    "Whether the discount applies on subscription shipping lines."
+    appliesOnSubscription: Boolean!
     "Whether the discount can be applied only once per customer."
     appliesOncePerCustomer: Boolean!
     "The number of times that the discount has been used."
@@ -3396,6 +3631,8 @@ type DiscountCodeFreeShipping {
     maximumShippingPrice: MoneyV2
     "The minimum subtotal or quantity that's required for the discount to be applied."
     minimumRequirement: DiscountMinimumRequirement
+    "The number of times a discount applies on recurring purchases (subscriptions)."
+    recurringCycleLimit: Int
     "URLs that can be used to share the discount."
     shareableUrls: [DiscountShareableUrl!]!
     "A short summary of the discount."
@@ -3534,6 +3771,10 @@ type DiscountCustomerBuys {
 
 "The qualifying items in an order, the quantity of each one, and the total value of the discount."
 type DiscountCustomerGets {
+    "Whether the discount applies on regular one-time-purchase items."
+    appliesOnOneTimePurchase: Boolean!
+    "Whether the discount applies on subscription items."
+    appliesOnSubscription: Boolean!
     "The items to which the discount applies."
     items: DiscountItems!
     "Entitled quantity and the discount value."
@@ -4395,6 +4636,8 @@ type FulfillmentOrder implements Node {
     deliveryMethod: DeliveryMethod
     "The destination where the items should be sent."
     destination: FulfillmentOrderDestination
+    "The date and time at which the fulfillment order will be fulfillable."
+    fulfillAt: DateTime
     "A list of fulfillments for the fulfillment order."
     fulfillments(
         "Returns the elements that come after the specified cursor."
@@ -4687,6 +4930,14 @@ type FulfillmentOrderMovePayload {
     userErrors: [UserError!]!
 }
 
+"Return type for `fulfillmentOrderOpen` mutation."
+type FulfillmentOrderOpenPayload {
+    "The fulfillment order that was marked as open."
+    fulfillmentOrder: FulfillmentOrder
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
 "Return type for `fulfillmentOrderRejectCancellationRequest` mutation."
 type FulfillmentOrderRejectCancellationRequestPayload {
     "The fulfillment order whose cancellation request was rejected."
@@ -4701,6 +4952,24 @@ type FulfillmentOrderRejectFulfillmentRequestPayload {
     fulfillmentOrder: FulfillmentOrder
     "List of errors that occurred executing the mutation."
     userErrors: [UserError!]!
+}
+
+"Return type for `fulfillmentOrderReschedule` mutation."
+type FulfillmentOrderReschedulePayload {
+    "The fulfillment order that was updated to the new fulfill at date."
+    fulfillmentOrder: FulfillmentOrder
+    "List of errors that occurred executing the mutation."
+    userErrors: [FulfillmentOrderRescheduleUserError!]!
+}
+
+"An error that occurs during the execution of FulfillmentOrderReschedule."
+type FulfillmentOrderRescheduleUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: FulfillmentOrderRescheduleUserErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
 }
 
 "Return type for `fulfillmentOrderSubmitCancellationRequest` mutation."
@@ -5139,6 +5408,8 @@ type LimitedPendingOrderCount {
 type LineItem implements Node {
     "Whether the line item's variant has an ID and inventory is managed by Shopify."
     canRestock: Boolean! @deprecated(reason : "Use `restockable` instead")
+    "The subscription contract associated with this line item."
+    contract: SubscriptionContract
     "List of additional information (metafields) about the line item."
     customAttributes: [Attribute!]!
     "The discounts that have been allocated onto the line item by discount applications."
@@ -5209,6 +5480,8 @@ type LineItem implements Node {
     requiresShipping: Boolean!
     "Whether the line item's variant has an ID and inventory is managed by Shopify."
     restockable: Boolean!
+    "The selling plan details associated with the line item."
+    sellingPlan: LineItemSellingPlan
     "Variant SKU number."
     sku: String
     "The TaxLine object connected to this line item."
@@ -5373,6 +5646,12 @@ type LineItemMutableEdge {
     cursor: String!
     "The item at the end of LineItemMutableEdge."
     node: LineItemMutable!
+}
+
+"Represents the selling plan for a line item."
+type LineItemSellingPlan {
+    "The name of the selling plan for display purposes."
+    name: String!
 }
 
 "A link to direct users to."
@@ -6289,6 +6568,45 @@ type Mutation {
         "The ID of the customer that the URL is generated for."
         customerId: ID!
     ): CustomerGenerateAccountActivationUrlPayload
+    "Creates a credit card payment method for a customer."
+    customerPaymentMethodCreditCardCreate(
+        "The billing address."
+        billingAddress: MailingAddressInput!,
+        "The ID of the customer."
+        customerId: ID!,
+        "The Cardserver session ID."
+        sessionId: String!
+    ): CustomerPaymentMethodCreditCardCreatePayload
+    "Updates the credit card payment method for a customer."
+    customerPaymentMethodCreditCardUpdate(
+        "The billing address."
+        billingAddress: MailingAddressInput!,
+        "The ID of the customer payment method."
+        id: ID!,
+        "The Cardserver session ID."
+        sessionId: String!
+    ): CustomerPaymentMethodCreditCardUpdatePayload
+    "Create a payment method from a credit card stored by Stripe."
+    customerPaymentMethodRemoteCreditCardCreate(
+        "The ID of the customer."
+        customerId: ID!,
+        "The Stripe Customer ID."
+        stripeCustomerId: String!,
+        "The Stripe Payment Method ID."
+        stripePaymentMethodId: String
+    ): CustomerPaymentMethodRemoteCreditCardCreatePayload
+    "Revokes a customer's payment method."
+    customerPaymentMethodRevoke(
+        "The ID of the customer payment method to be revoked."
+        customerPaymentMethodId: ID!
+    ): CustomerPaymentMethodRevokePayload
+    "Sends a link to the customer so they can update a specific payment method."
+    customerPaymentMethodSendUpdateEmail(
+        "The payment method to be updated."
+        customerPaymentMethodId: ID!,
+        "Specifies the payment method update email fields."
+        email: EmailInput
+    ): CustomerPaymentMethodSendUpdateEmailPayload
     "Remove tax exemptions from a customer."
     customerRemoveTaxExemptions(
         "The ID of the customer to update."
@@ -6625,6 +6943,11 @@ type Mutation {
         "The ID of the location where the fulfillment order will be moved."
         newLocationId: ID!
     ): FulfillmentOrderMovePayload
+    "Marks a scheduled fulfillment order as open."
+    fulfillmentOrderOpen(
+        "The ID of the fulfillment order to mark as open."
+        id: ID!
+    ): FulfillmentOrderOpenPayload
     "Rejects a cancellation request sent to a fulfillment service for a fulfillment order."
     fulfillmentOrderRejectCancellationRequest(
         "The ID of the fulfillment order associated with the cancellation request."
@@ -6639,6 +6962,13 @@ type Mutation {
         "An optional reason for rejecting the fulfillment request."
         message: String
     ): FulfillmentOrderRejectFulfillmentRequestPayload
+    "Reschedules a scheduled fulfillment order."
+    fulfillmentOrderReschedule(
+        "The new fulfill at date of the fulfillment order."
+        fulfillAt: DateTime!,
+        "The ID of the fulfillment order to reschedule."
+        id: ID!
+    ): FulfillmentOrderReschedulePayload
     "Sends a cancellation request to the fulfillment service of a fulfillment order."
     fulfillmentOrderSubmitCancellationRequest(
         "The ID of the fulfillment order associated with the cancellation request."
@@ -6932,6 +7262,30 @@ type Mutation {
         "The input for the mutation."
         input: OrderInput!
     ): OrderUpdatePayload
+    "Extends an open payment session."
+    paymentSessionExtend(
+        "The payment session ID."
+        id: ID!
+    ): PaymentSessionExtendPayload
+    "Rejects an open payment session."
+    paymentSessionReject(
+        "The payment session ID."
+        id: ID!,
+        "The rejection reason."
+        reason: PaymentSessionRejectionReasonInput!
+    ): PaymentSessionRejectPayload
+    "Resolves an open payment session."
+    paymentSessionResolve(
+        "The payment session ID."
+        id: ID!
+    ): PaymentSessionResolvePayload
+    "Configure the partner managed gateway onto the merchant's store."
+    paymentsAppConfigure(
+        "Handle used in the external system."
+        externalHandle: String,
+        "The provider is ready to process merchant's payments."
+        ready: Boolean!
+    ): PaymentsAppConfigurePayload
     "Activate a price rule."
     priceRuleActivate(
         "ID of the price rule to update."
@@ -7056,6 +7410,26 @@ type Mutation {
         "The ID of the product on which to update the image."
         productId: ID!
     ): ProductImageUpdatePayload
+    """
+
+    Adds multiple selling plan groups to a product.
+    """
+    productJoinSellingPlanGroups(
+        "The ID of the product."
+        id: ID!,
+        "The IDs of the selling plan groups to add."
+        sellingPlanGroupIds: [ID!]!
+    ): ProductJoinSellingPlanGroupsPayload
+    """
+
+    Removes multiple groups from a product.
+    """
+    productLeaveSellingPlanGroups(
+        "The ID of the product."
+        id: ID!,
+        "The IDs of the selling plan groups to add."
+        sellingPlanGroupIds: [ID!]!
+    ): ProductLeaveSellingPlanGroupsPayload
     "Publishes a product. Products that are sold exclusively on subscription (`requiresSellingPlan: true`) can only be published on online stores."
     productPublish(
         "Specifies the product to publish and the channels to publish it to."
@@ -7116,6 +7490,26 @@ type Mutation {
         "A list of pairs of variants and media to be deleted from the variants."
         variantMedia: [ProductVariantDetachMediaInput!]!
     ): ProductVariantDetachMediaPayload
+    """
+
+    Adds multiple selling plan groups to a product variant.
+    """
+    productVariantJoinSellingPlanGroups(
+        "The ID of the product variant."
+        id: ID!,
+        "The IDs of the selling plan groups to add."
+        sellingPlanGroupIds: [ID!]!
+    ): ProductVariantJoinSellingPlanGroupsPayload
+    """
+
+    Remove multiple groups from a product variant.
+    """
+    productVariantLeaveSellingPlanGroups(
+        "The ID of the product variant."
+        id: ID!,
+        "The IDs of the selling plan groups to leave."
+        sellingPlanGroupIds: [ID!]!
+    ): ProductVariantLeaveSellingPlanGroupsPayload
     "Updates a product variant."
     productVariantUpdate(
         "The updated properties for the product variant."
@@ -7191,6 +7585,65 @@ type Mutation {
         "Specifies the input fields for a script tag."
         input: ScriptTagInput!
     ): ScriptTagUpdatePayload
+    """
+
+    Adds multiple product variants to a selling plan group.
+    """
+    sellingPlanGroupAddProductVariants(
+        "The ID of the selling plan group."
+        id: ID!,
+        "The IDs of the product variants to add."
+        productVariantIds: [ID!]!
+    ): SellingPlanGroupAddProductVariantsPayload
+    """
+
+    Adds multiple products to a selling plan group.
+    """
+    sellingPlanGroupAddProducts(
+        "The ID of the selling plan group."
+        id: ID!,
+        "The IDs of the products to add."
+        productIds: [ID!]!
+    ): SellingPlanGroupAddProductsPayload
+    "Creates a Selling Plan Group."
+    sellingPlanGroupCreate(
+        "The properties of the new Selling Plan Group."
+        input: SellingPlanGroupInput!,
+        "The resources this Selling Plan Group should be applied to."
+        resources: SellingPlanGroupResourceInput
+    ): SellingPlanGroupCreatePayload
+    "Delete a Selling Plan Group."
+    sellingPlanGroupDelete(
+        "The id of the selling plan group to delete."
+        id: ID!
+    ): SellingPlanGroupDeletePayload
+    """
+
+    Removes multiple product variants from a selling plan group.
+    """
+    sellingPlanGroupRemoveProductVariants(
+        "The ID of the selling plan group."
+        id: ID!,
+        "The IDs of the product variants to remove."
+        productVariantIds: [ID!]!
+    ): SellingPlanGroupRemoveProductVariantsPayload
+    """
+
+    Removes multiple products from a selling plan group.
+    """
+    sellingPlanGroupRemoveProducts(
+        "The ID of the selling plan group."
+        id: ID!,
+        "The IDs of the products to remove."
+        productIds: [ID!]!
+    ): SellingPlanGroupRemoveProductsPayload
+    "Update a Selling Plan Group."
+    sellingPlanGroupUpdate(
+        "The Selling Plan Group to update."
+        id: ID!,
+        "The properties of the Selling Plan Group to update."
+        input: SellingPlanGroupInput
+    ): SellingPlanGroupUpdatePayload
     "Deletes a shipping package."
     shippingPackageDelete(
         "The ID of the shipping package."
@@ -7253,6 +7706,111 @@ type Mutation {
         "Provides the input fields required to delete a storefront access token."
         input: StorefrontAccessTokenDeleteInput!
     ): StorefrontAccessTokenDeletePayload
+    "Creates a new subscription billing attempt."
+    subscriptionBillingAttemptCreate(
+        "The information to apply as a billing attempt."
+        subscriptionBillingAttemptInput: SubscriptionBillingAttemptInput!,
+        "The ID of the subscription contract."
+        subscriptionContractId: ID!
+    ): SubscriptionBillingAttemptCreatePayload
+    "Creates a Subscription Contract."
+    subscriptionContractCreate(
+        "The properties of the new Subscription Contract."
+        input: SubscriptionContractCreateInput!
+    ): SubscriptionContractCreatePayload
+    "Sets the next billing date of a Subscription Contract."
+    subscriptionContractSetNextBillingDate(
+        "The gid of the Subscription Contract to set the next billing date for."
+        contractId: ID!,
+        "The next billing date."
+        date: DateTime!
+    ): SubscriptionContractSetNextBillingDatePayload
+    "Updates a Subscription Contract."
+    subscriptionContractUpdate(
+        "The gid of the Subscription Contract to update."
+        contractId: ID!
+    ): SubscriptionContractUpdatePayload
+    "Commits the updates of a Subscription Contract draft."
+    subscriptionDraftCommit(
+        "The gid of the Subscription Contract draft to commit."
+        draftId: ID!
+    ): SubscriptionDraftCommitPayload
+    "Adds a subscription discount to a subscription draft."
+    subscriptionDraftDiscountAdd(
+        "The ID of the Subscription Contract draft to add a subscription discount to."
+        draftId: ID!,
+        "The properties of the new Subscription Discount."
+        input: SubscriptionManualDiscountInput!
+    ): SubscriptionDraftDiscountAddPayload
+    "Applies a code discount on the subscription draft."
+    subscriptionDraftDiscountCodeApply(
+        "The gid of the subscription contract draft to apply a subscription code discount on."
+        draftId: ID!,
+        "Code discount redeem code."
+        redeemCode: String!
+    ): SubscriptionDraftDiscountCodeApplyPayload
+    "Removes a subscription discount from a subscription draft."
+    subscriptionDraftDiscountRemove(
+        "The gid of the subscription draft discount to remove."
+        discountId: ID!,
+        "The gid of the subscription contract draft to remove a subscription discount from."
+        draftId: ID!
+    ): SubscriptionDraftDiscountRemovePayload
+    "Updates a subscription discount on a subscription draft."
+    subscriptionDraftDiscountUpdate(
+        "The gid of the Subscription Discount to update."
+        discountId: ID!,
+        "The ID of the Subscription Contract draft to update a subscription discount on."
+        draftId: ID!,
+        "The properties to update on the Subscription Discount."
+        input: SubscriptionManualDiscountInput!
+    ): SubscriptionDraftDiscountUpdatePayload
+    "Adds a subscription free shipping discount to a subscription draft."
+    subscriptionDraftFreeShippingDiscountAdd(
+        "The ID of the subscription contract draft to add a subscription free shipping discount to."
+        draftId: ID!,
+        "The properties of the new subscription free shipping discount."
+        input: SubscriptionFreeShippingDiscountInput!
+    ): SubscriptionDraftFreeShippingDiscountAddPayload
+    "Updates a subscription free shipping discount on a subscription draft."
+    subscriptionDraftFreeShippingDiscountUpdate(
+        "The gid of the Subscription Discount to update."
+        discountId: ID!,
+        "The ID of the Subscription Contract draft to update a subscription discount on."
+        draftId: ID!,
+        "The properties to update on the Subscription Free Shipping Discount."
+        input: SubscriptionFreeShippingDiscountInput!
+    ): SubscriptionDraftFreeShippingDiscountUpdatePayload
+    "Adds a subscription line to a subscription draft."
+    subscriptionDraftLineAdd(
+        "The gid of the Subscription Contract draft to add a subscription line to."
+        draftId: ID!,
+        "The properties of the new Subscription Line."
+        input: SubscriptionLineInput!
+    ): SubscriptionDraftLineAddPayload
+    "Removes a subscription line from a subscription draft."
+    subscriptionDraftLineRemove(
+        "The gid of the Subscription Contract draft to remove a subscription line from."
+        draftId: ID!,
+        "The gid of the Subscription Line to remove."
+        lineId: ID!
+    ): SubscriptionDraftLineRemovePayload
+    "Updates a subscription line on a subscription draft."
+    subscriptionDraftLineUpdate(
+        "The gid of the Subscription Contract draft to update a subscription line from."
+        draftId: ID!,
+        "The properties of the new Subscription Line."
+        input: SubscriptionLineUpdateInput!,
+        "The gid of the Subscription Line to update."
+        lineId: ID!
+    ): SubscriptionDraftLineUpdatePayload
+    "Updates a Subscription Draft."
+    subscriptionDraftUpdate(
+        "The gid of the Subscription Draft to update."
+        draftId: ID!,
+        "The properties of the new Subscription Contract."
+        input: SubscriptionDraftInput!
+    ): SubscriptionDraftUpdatePayload
     "Add tags to a taggable object."
     tagsAdd(
         "The ID of a resource to add tags to."
@@ -8187,10 +8745,17 @@ type OrderTransaction implements Node {
     amountV2: MoneyV2! @deprecated(reason : "Use `amountSet` instead")
     "Authorization code associated with the transaction."
     authorizationCode: String
+    """
+
+    The time when the authorization expires. This field is available only to stores on a Shopify Plus plan and is populated only for Shopify Payments authorizations.
+    """
+    authorizationExpiresAt: DateTime
     "Date and time when the transaction was created."
     createdAt: DateTime!
     "A standardized error code, independent of the payment provider."
     errorCode: OrderTransactionErrorCode
+    "The transaction fees charged on the order transaction."
+    fees: [TransactionFee!]!
     "The human-readable payment gateway name used to process the transaction."
     formattedGateway: String
     "The payment gateway used to process the transaction."
@@ -8234,6 +8799,15 @@ type OrderTransaction implements Node {
     The value of this field depends on which gateway processed the transaction.
     """
     receipt: String @deprecated(reason : "Use `receiptJson` instead")
+    "The settlement currency."
+    settlementCurrency: CurrencyCode
+    "The rate used when converting the transaction amount to settlement currency."
+    settlementCurrencyRate: Decimal
+    """
+
+    Contains all Shopify Payments information related to an order transaction. This field is available only to stores on a Shopify Plus plan.
+    """
+    shopifyPaymentsSet: ShopifyPaymentsTransactionSet
     "The status of this transaction."
     status: OrderTransactionStatus!
     "Whether the transaction is a test transaction."
@@ -8288,10 +8862,76 @@ type PageInfo {
     hasPreviousPage: Boolean!
 }
 
+"Represents a payment session."
+type PaymentSession {
+    "Globally unique identifier."
+    id: ID!
+    "The url of the Checkout to redirect the buyer to."
+    redirectUrl: URL!
+    "The payment status."
+    status: PaymentSessionStatus!
+}
+
+"Return type for `paymentSessionExtend` mutation."
+type PaymentSessionExtendPayload {
+    "The updated payment session."
+    paymentSession: PaymentSession
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Return type for `paymentSessionReject` mutation."
+type PaymentSessionRejectPayload {
+    "The updated payment session."
+    paymentSession: PaymentSession
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Return type for `paymentSessionResolve` mutation."
+type PaymentSessionResolvePayload {
+    "The updated payment session."
+    paymentSession: PaymentSession
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
+}
+
+"Represents a payment status."
+type PaymentSessionStatus {
+    "The payment status code."
+    code: PaymentSessionStatusCode!
+    "The payment status reason (if any)."
+    reason: PaymentSessionStatusReason
+}
+
+"Payment status reason."
+type PaymentSessionStatusReason {
+    "The reason code."
+    code: PaymentSessionStatusReasonRejectionCode!
+    "The custom localized message for the merchant."
+    merchantMessage: String
+}
+
 "Settings related to payments."
 type PaymentSettings {
     "List of the digital wallets which the shop supports."
     supportedDigitalWallets: [DigitalWallet!]!
+}
+
+"The production configuration of the payments app."
+type PaymentsAppConfiguration {
+    "Handle used by the provider."
+    externalHandle: String
+    "The provider is ready to process merchant's payments."
+    ready: Boolean!
+}
+
+"Return type for `paymentsAppConfigure` mutation."
+type PaymentsAppConfigurePayload {
+    "The production configuration of the payments app."
+    paymentsAppConfiguration: PaymentsAppConfiguration
+    "List of errors that occurred executing the mutation."
+    userErrors: [UserError!]!
 }
 
 "Price rules are a set of conditions, including entitlements and prerequisites, that must be met in order for a discount code to apply."
@@ -9061,6 +9701,8 @@ type Product implements HasMetafields & HasPublishedTranslations & LegacyInterop
         "The ID of the publication to check."
         publicationId: ID!
     ): Boolean!
+    "Whether the product can only be purchased with a selling plan."
+    requiresSellingPlan: Boolean!
     "The list of resources that are published to a publication."
     resourcePublications(
         "Returns the elements that come after the specified cursor."
@@ -9097,6 +9739,8 @@ type Product implements HasMetafields & HasPublishedTranslations & LegacyInterop
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): ResourcePublicationV2Connection!
+    "Count of selling plan groups associated with the product."
+    sellingPlanGroupCount: Int!
     "SEO information of the product."
     seo: SEO!
     "The product status. Product statuses aren't currently available to stores on the Shopify Plus plan."
@@ -9304,6 +9948,22 @@ type ProductImageUpdatePayload {
     ): Image
     "List of errors that occurred executing the mutation."
     userErrors: [UserError!]!
+}
+
+"Return type for `productJoinSellingPlanGroups` mutation."
+type ProductJoinSellingPlanGroupsPayload {
+    "The product object."
+    product: Product
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `productLeaveSellingPlanGroups` mutation."
+type ProductLeaveSellingPlanGroupsPayload {
+    "The product object."
+    product: Product
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
 }
 
 """
@@ -9564,6 +10224,8 @@ type ProductVariant implements HasMetafields & HasPublishedTranslations & Legacy
     requiresShipping: Boolean! @deprecated(reason : "Use `InventoryItem.requiresShipping` instead.")
     "List of product options applied to the variant."
     selectedOptions: [SelectedOption!]!
+    "Count of selling plan groups associated with the product variant."
+    sellingPlanGroupCount: Int!
     """
 
     An identifier for the product variant in the shop. Required in order to connect to a fulfillment service.
@@ -9650,6 +10312,22 @@ type ProductVariantEdge {
     node: ProductVariant!
 }
 
+"Return type for `productVariantJoinSellingPlanGroups` mutation."
+type ProductVariantJoinSellingPlanGroupsPayload {
+    "The product variant object."
+    productVariant: ProductVariant
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `productVariantLeaveSellingPlanGroups` mutation."
+type ProductVariantLeaveSellingPlanGroupsPayload {
+    "The product variant object."
+    productVariant: ProductVariant
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
 """
 
 The compare-at price and price of a variant sharing a currency.
@@ -9687,8 +10365,7 @@ type ProductVariantUpdatePayload {
 
 """
 
-A publication is a group of products and collections that is published to an app. A publication can be a platform or marketplace such
-as Facebook or Pinterest, an online store, or POS.
+A publication is a group of products and collections that is published to an app.
 """
 type Publication implements Node {
     "The app associated with the publication."
@@ -10116,6 +10793,13 @@ type QueryRoot {
         "The ID of the Customer to return."
         id: ID!
     ): Customer
+    "Returns a CustomerPaymentMethod resource by ID."
+    customerPaymentMethod(
+        "The ID of the CustomerPaymentMethod to return."
+        id: ID!,
+        "Whether to show the customer's revoked payment method."
+        showRevoked: Boolean = false
+    ): CustomerPaymentMethod
     "List of the shop's customer saved searches."
     customerSavedSearches(
         "Returns the elements that come after the specified cursor."
@@ -10833,6 +11517,37 @@ type QueryRoot {
         "The source URL of the script tag to filter by."
         src: URL
     ): ScriptTagConnection!
+    "Returns a Selling Plan Group resource by ID."
+    sellingPlanGroup(
+        "The ID of the SellingPlanGroup to return."
+        id: ID!
+    ): SellingPlanGroup
+    "List Selling Plan Groups."
+    sellingPlanGroups(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        """
+
+        Supported filter parameters:
+        - `delivery_frequency`
+        - `percentage_off`
+        - `name`
+        - `created_at`
+
+        See the detailed [search syntax](https://help.shopify.com/api/getting-started/search-syntax).
+        """
+        query: String,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false,
+        "Sort the underlying list by the given key."
+        sortKey: SellingPlanGroupSortKeys = ID
+    ): SellingPlanGroupConnection!
     "Returns a Shop resource corresponding to access token used in request."
     shop: Shop!
     "List of locales available on a shop."
@@ -10842,6 +11557,34 @@ type QueryRoot {
     ): [ShopLocale!]!
     "Shopify Payments account information, including balances and payouts."
     shopifyPaymentsAccount: ShopifyPaymentsAccount
+    "Returns a SubscriptionBillingAttempt by ID."
+    subscriptionBillingAttempt(
+        "The ID of the SubscriptionBillingAttempt to return."
+        id: ID!
+    ): SubscriptionBillingAttempt
+    "Returns a Subscription Contract resource by ID."
+    subscriptionContract(
+        "The ID of the Subscription Contract to return."
+        id: ID!
+    ): SubscriptionContract
+    "List Subscription Contracts."
+    subscriptionContracts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionContractConnection!
+    "Returns a Subscription Draft resource by ID."
+    subscriptionDraft(
+        "The ID of the Subscription Draft to return."
+        id: ID!
+    ): SubscriptionDraft
     "List of TenderTransactions associated with the Shop."
     tenderTransactions(
         "Returns the elements that come after the specified cursor."
@@ -11363,6 +12106,307 @@ type SelectedOption {
     name: String!
     "The product option’s value."
     value: String!
+}
+
+"Represents a selling plan."
+type SellingPlan implements Node {
+    "Selling plan policy which describes the billing details."
+    billingPolicy: SellingPlanBillingPolicy!
+    "The date and time when the selling plan was created."
+    createdAt: DateTime!
+    "Selling plan policy which describes the delivery details."
+    deliveryPolicy: SellingPlanDeliveryPolicy!
+    "Buyer facing string which describes the selling plan commitment."
+    description: String
+    "Globally unique identifier."
+    id: ID!
+    "Buyer facing string which describes the selling plan content."
+    name: String!
+    "List of options values applied to the selling plan group options."
+    options: [String!]!
+    "Relative position of the selling plan for display. A lower position will be displayed before a higher position."
+    position: Int
+    "Selling plan pricing details."
+    pricingPolicies: [SellingPlanPricingPolicy!]!
+}
+
+"Represents a selling plan policy anchor."
+type SellingPlanAnchor {
+    """
+
+    The day of the anchor.
+
+    When `type` is WEEKDAY, the value must be between 1-7. Shopify interprets
+    the days of the week according to ISO 8601, where 1 is Monday.
+
+    If `type` is not WEEKDAY, then the value must be between 1-31.
+    """
+    day: Int!
+    """
+
+    The month of the anchor. If type is different than YEARDAY, this field must be null, otherwise it must be
+    between 1-12.
+    """
+    month: Int
+    """
+
+    Represents the anchor type, it can be one one of WEEKDAY, MONTHDAY, YEARDAY.
+    """
+    type: SellingPlanAnchorType!
+}
+
+type SellingPlanConnection {
+    "A list of edges."
+    edges: [SellingPlanEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+type SellingPlanEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SellingPlanEdge."
+    node: SellingPlan!
+}
+
+"Represents a fixed selling plan pricing policy."
+type SellingPlanFixedPricingPolicy implements SellingPlanPricingPolicyBase {
+    "The price adjustment type."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType!
+    "The price adjustment value."
+    adjustmentValue: SellingPlanPricingPolicyAdjustmentValue!
+    "The date and time when the fixed selling plan pricing policy was created."
+    createdAt: DateTime!
+}
+
+"Represents a selling plan group."
+type SellingPlanGroup implements Node {
+    "Identifier for app, exposed in Liquid and product JSON."
+    appId: String
+    "Whether the given product is directly associated with the selling plan group."
+    appliesToProduct(
+        "The ID of the product."
+        productId: ID!
+    ): Boolean!
+    "Whether the given product variant is directly associated with the selling plan group."
+    appliesToProductVariant(
+        "The ID of the product."
+        productVariantId: ID!
+    ): Boolean!
+    """
+
+    Whether any of the product variants of the given product are associated with the selling plan group.
+    """
+    appliesToProductVariants(
+        "The ID of the product."
+        productId: ID!
+    ): Boolean!
+    "The date and time when the selling plan group was created."
+    createdAt: DateTime!
+    "Merchant facing description of the selling plan group."
+    description: String
+    "Globally unique identifier."
+    id: ID!
+    "Merchant facing label of the selling plan group."
+    merchantCode: String!
+    "Buyer facing label of the selling plan group."
+    name: String!
+    "List of options values available to selling plans for the group."
+    options: [String!]!
+    "Relative position of the selling plan group for display."
+    position: Int
+    "Count of products associated to the selling plan group."
+    productCount: Int!
+    "Count of product variants associated to the selling plan group."
+    productVariantCount(
+        "The ID of the product to scope the count to."
+        productId: ID
+    ): Int!
+    "Product Variants associated to the selling plan group."
+    productVariants(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Filters the product variants by a product id."
+        productId: ID,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): ProductVariantConnection!
+    "Products associated to the selling plan group."
+    products(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): ProductConnection!
+    "Selling plans associated to the selling plan group."
+    sellingPlans(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SellingPlanConnection!
+    "Summary of the policies of the selling plan group."
+    summary: String
+}
+
+"Return type for `sellingPlanGroupAddProductVariants` mutation."
+type SellingPlanGroupAddProductVariantsPayload {
+    "The updated selling plan group."
+    sellingPlanGroup: SellingPlanGroup
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `sellingPlanGroupAddProducts` mutation."
+type SellingPlanGroupAddProductsPayload {
+    "The updated selling plan group."
+    sellingPlanGroup: SellingPlanGroup
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+type SellingPlanGroupConnection {
+    "A list of edges."
+    edges: [SellingPlanGroupEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+"Return type for `sellingPlanGroupCreate` mutation."
+type SellingPlanGroupCreatePayload {
+    "The created selling plan group object."
+    sellingPlanGroup: SellingPlanGroup
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `sellingPlanGroupDelete` mutation."
+type SellingPlanGroupDeletePayload {
+    "The id of the deleted selling plan group object."
+    deletedSellingPlanGroupId: ID
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+type SellingPlanGroupEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SellingPlanGroupEdge."
+    node: SellingPlanGroup!
+}
+
+"Return type for `sellingPlanGroupRemoveProductVariants` mutation."
+type SellingPlanGroupRemoveProductVariantsPayload {
+    "The removed product variant ids."
+    removedProductVariantIds: [ID!]
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `sellingPlanGroupRemoveProducts` mutation."
+type SellingPlanGroupRemoveProductsPayload {
+    "The removed product ids."
+    removedProductIds: [ID!]
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"Return type for `sellingPlanGroupUpdate` mutation."
+type SellingPlanGroupUpdatePayload {
+    "The IDs of the deleted Subscription Plans."
+    deletedSellingPlanIds: [ID!]
+    "The updated Selling Plan Group."
+    sellingPlanGroup: SellingPlanGroup
+    "List of errors that occurred executing the mutation."
+    userErrors: [SellingPlanGroupUserError!]!
+}
+
+"""
+
+Represents a selling plan group custom error.
+"""
+type SellingPlanGroupUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: SellingPlanGroupUserErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
+}
+
+"Represents the percentage value of a selling plan pricing policy percentage type."
+type SellingPlanPricingPolicyPercentageValue {
+    "The percentage value."
+    percentage: Float!
+}
+
+"Represents a recurring selling plan billing policy."
+type SellingPlanRecurringBillingPolicy {
+    "Specific anchor dates upon which the billing interval calculations should be made."
+    anchors: [SellingPlanAnchor!]!
+    "The date and time when the selling plan billing policy was created."
+    createdAt: DateTime!
+    "The billing frequency, it can be either: day, week, month or year."
+    interval: SellingPlanInterval!
+    "The number of intervals between billings."
+    intervalCount: Int!
+    "Maximum number of billing iterations."
+    maxCycles: Int
+    "Minimum number of billing iterations."
+    minCycles: Int
+}
+
+"Represents a recurring selling plan delivery policy."
+type SellingPlanRecurringDeliveryPolicy {
+    "Specific anchor dates upon which the delivery interval calculations should be made."
+    anchors: [SellingPlanAnchor!]!
+    "The date and time when the selling plan delivery policy was created."
+    createdAt: DateTime!
+    "A buffer period for orders to be included in a cycle."
+    cutoff: Int
+    """
+
+    Specifies if the delivery policy is merchant or buyer-centric.
+    If it is buyer-centric it states the time at which the buyer will receive the goods.
+    If it is merchant-centric it states the time at which the fulfillment should be started.
+    """
+    intent: SellingPlanRecurringDeliveryPolicyIntent!
+    "The delivery frequency, it can be either: day, week, month or year."
+    interval: SellingPlanInterval!
+    "The number of intervals between deliveries."
+    intervalCount: Int!
+    "Fulfillment or delivery behavior of the first fulfillment when the order is placed before the anchor. The default value for this field is `ASAP`."
+    preAnchorBehavior: SellingPlanRecurringDeliveryPolicyPreAnchorBehavior!
+}
+
+"Represents a recurring selling plan pricing policy."
+type SellingPlanRecurringPricingPolicy implements SellingPlanPricingPolicyBase {
+    "The price adjustment type."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType!
+    "The price adjustment value."
+    adjustmentValue: SellingPlanPricingPolicyAdjustmentValue!
+    "Cycle after which this pricing policy applies."
+    afterCycle: Int
+    "The date and time when the recurring selling plan pricing policy was created."
+    createdAt: DateTime!
 }
 
 "Represents the shipping details that the customer chose for their order."
@@ -12326,12 +13370,18 @@ type ShopFeatures {
     deliveryProfiles: Boolean! @deprecated(reason : "Delivery profiles are now 100% enabled across Shopify.")
     "Whether a shop has access to the dynamic remarketing feature."
     dynamicRemarketing: Boolean!
+    "Whether a shop can be migrated to use Shopify subscriptions."
+    eligibleForSubscriptionMigration: Boolean!
+    "Whether a shop is configured properly to sell subscriptions."
+    eligibleForSubscriptions: Boolean!
     "Whether a shop can create gift cards."
     giftCards: Boolean!
     "Display Harmonized System codes on products.  Used for customs when shipping cross-border."
     harmonizedSystemCode: Boolean!
     "Whether a shop can enable international domains."
     internationalDomains: Boolean!
+    "Whether a shop has enabled a legacy subscription gateway to handle older subscriptions."
+    legacySubscriptionGatewayEnabled: Boolean!
     "Whether to show the live view. Live view is hidden from merchants that are on a trial or don't have a storefront."
     liveView: Boolean!
     "Whether the multi-location functionality is enabled for this shop."
@@ -12340,6 +13390,8 @@ type ShopFeatures {
     onboardingVisual: Boolean!
     "Whether a shop has access to all reporting features."
     reports: Boolean!
+    "Whether the shop has ever had subscription products."
+    sellsSubscriptions: Boolean!
     "Whether the shop has a Shopify Plus subscription."
     shopifyPlus: Boolean! @deprecated(reason : "Use Shop.plan.shopifyPlus instead.")
     "Whether to show metrics. Metrics are hidden for new merchants until they become meaningful."
@@ -12682,6 +13734,20 @@ type ShopifyPaymentsDisputeReasonDetails {
     reason: ShopifyPaymentsDisputeReason!
 }
 
+"Presents all Shopify Payments information related to an extended authorization."
+type ShopifyPaymentsExtendedAuthorization {
+    """
+
+    The time after which the extended authorization expires. After the expiry, the merchant is unable to capture the payment.
+    """
+    extendedAuthorizationExpiresAt: DateTime!
+    """
+
+    The time after which capture will incur an additional fee.
+    """
+    standardAuthorizationExpiresAt: DateTime!
+}
+
 "The fraud settings of a payments account."
 type ShopifyPaymentsFraudSettings {
     "Decline a charge if there is an AVS failure."
@@ -12801,6 +13867,15 @@ type ShopifyPaymentsPayoutSummary {
     retriedPayoutsFee: MoneyV2!
     "Total gross amount for all retried payouts."
     retriedPayoutsGross: MoneyV2!
+}
+
+"Presents all Shopify Payments specific information related to an order transaction."
+type ShopifyPaymentsTransactionSet {
+    """
+
+    Contains all fields related to an extended authorization.
+    """
+    extendedAuthorizationSet: ShopifyPaymentsExtendedAuthorization
 }
 
 """
@@ -12952,6 +14027,753 @@ type StringEdge {
     node: String!
 }
 
+"Represents an applied code discount."
+type SubscriptionAppliedCodeDiscount {
+    "The unique identifier."
+    id: ID!
+    "The redeem code of the discount that applies on the subscription."
+    redeemCode: String!
+    "The reason that the discount on the subscription draft is rejected."
+    rejectionReason: SubscriptionDiscountRejectionReason
+}
+
+"Record of an execution of the subscription billing schedule."
+type SubscriptionBillingAttempt implements Node {
+    "The date and time when the billing attempt was completed."
+    completedAt: DateTime
+    "The date and time when the billing attempt was created."
+    createdAt: DateTime!
+    "A message describing a payment error during processing."
+    errorMessage: String
+    "Globally unique identifier."
+    id: ID!
+    "A unique key generated by the client to avoid duplicate payments."
+    idempotencyKey: String!
+    """
+
+    The URL where the customer needs to be redirected so they can complete the 3D Secure payment flow.
+    """
+    nextActionUrl: URL
+    "The result of this billing attempt if completed successfully."
+    order: Order
+    "Whether or not the billing attempt is still processing."
+    ready: Boolean!
+    "The subscription contract."
+    subscriptionContract: SubscriptionContract!
+}
+
+type SubscriptionBillingAttemptConnection {
+    "A list of edges."
+    edges: [SubscriptionBillingAttemptEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+"Return type for `subscriptionBillingAttemptCreate` mutation."
+type SubscriptionBillingAttemptCreatePayload {
+    "The subscription billing attempt."
+    subscriptionBillingAttempt: SubscriptionBillingAttempt
+    "List of errors that occurred executing the mutation."
+    userErrors: [BillingAttemptUserError!]!
+}
+
+type SubscriptionBillingAttemptEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SubscriptionBillingAttemptEdge."
+    node: SubscriptionBillingAttempt!
+}
+
+"Represents a Subscription Billing Policy."
+type SubscriptionBillingPolicy {
+    "Specific anchor dates upon which the billing interval calculations should be made."
+    anchors: [SellingPlanAnchor!]!
+    "The kind of interval that is associated with this schedule (e.g. Monthly, Weekly, etc)."
+    interval: SellingPlanInterval!
+    "The number of billing intervals between invoices."
+    intervalCount: Int!
+    "Maximum amount of cycles after which the subscription ends."
+    maxCycles: Int
+    "Minimum amount of cycles required in the subscription."
+    minCycles: Int
+}
+
+"Represents a Subscription Contract."
+type SubscriptionContract implements Node {
+    "The subscription app that this subscription contract is registered to."
+    app: App
+    "URL of the subscription contract page on the subscription app."
+    appAdminUrl: URL
+    "The list of billing attempts associated with the subscription contract."
+    billingAttempts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionBillingAttemptConnection!
+    "The billing policy associated with the subscription contract."
+    billingPolicy: SubscriptionBillingPolicy!
+    "The date and time when the subscription contract was created."
+    createdAt: DateTime!
+    "The currency used for the subscription contract."
+    currencyCode: CurrencyCode!
+    "The customer to whom the subscription contract belongs."
+    customer: Customer
+    "The customer payment method used for the subscription contract."
+    customerPaymentMethod(
+        "Whether to show the customer's revoked payment method."
+        showRevoked: Boolean = false
+    ): CustomerPaymentMethod
+    "The delivery method for each billing of the subscription contract."
+    deliveryMethod: SubscriptionDeliveryMethod
+    "The delivery policy associated with the subscription contract."
+    deliveryPolicy: SubscriptionDeliveryPolicy!
+    "The delivery price for each billing of the subscription contract."
+    deliveryPrice: MoneyV2!
+    "The list of subscription discounts associated with the subscription contract."
+    discounts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionManualDiscountConnection!
+    "Globally unique identifier."
+    id: ID!
+    "The current status of the last payment."
+    lastPaymentStatus: SubscriptionContractLastPaymentStatus
+    "The number of lines associated with the subscription contract."
+    lineCount: Int!
+    "The list of subscription lines associated with the subscription contract."
+    lines(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionLineConnection!
+    "The next billing date for the subscription contract."
+    nextBillingDate: DateTime
+    "The list of orders associated with the subscription contract."
+    orders(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): OrderConnection!
+    "The order from which this contract originated."
+    originOrder: Order
+    "The current status of the subscription contract."
+    status: SubscriptionContractSubscriptionStatus!
+    "The date and time when the subscription contract was updated."
+    updatedAt: DateTime!
+}
+
+type SubscriptionContractConnection {
+    "A list of edges."
+    edges: [SubscriptionContractEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+"Return type for `subscriptionContractCreate` mutation."
+type SubscriptionContractCreatePayload {
+    "The Subscription Contract object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+type SubscriptionContractEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SubscriptionContractEdge."
+    node: SubscriptionContract!
+}
+
+"Return type for `subscriptionContractSetNextBillingDate` mutation."
+type SubscriptionContractSetNextBillingDatePayload {
+    "The updated Subscription Contract object."
+    contract: SubscriptionContract
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionContractUserError!]!
+}
+
+"Return type for `subscriptionContractUpdate` mutation."
+type SubscriptionContractUpdatePayload {
+    "The Subscription Contract object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Represents a Subscription Contract error."
+type SubscriptionContractUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: SubscriptionContractErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
+}
+
+"Represents a Subscription Line Pricing Cycle Adjustment."
+type SubscriptionCyclePriceAdjustment {
+    "Price adjustment type."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType!
+    "Price adjustment value."
+    adjustmentValue: SellingPlanPricingPolicyAdjustmentValue!
+    "The number of cycles required before this pricing policy applies."
+    afterCycle: Int!
+    "The computed price after the adjustments applied."
+    computedPrice: MoneyV2!
+}
+
+"Represents a shipping delivery method: a mailing address and a shipping option."
+type SubscriptionDeliveryMethodShipping {
+    "The address to ship to."
+    address: SubscriptionMailingAddress!
+    "The details of the shipping method to use."
+    shippingOption: SubscriptionDeliveryMethodShippingOption!
+}
+
+"Represents the selected shipping option on a subscription contract."
+type SubscriptionDeliveryMethodShippingOption {
+    "The carrier service of the shipping option."
+    carrierService: DeliveryCarrierService
+    "The code of the shipping option."
+    code: String
+    "The description of the shipping option."
+    description: String
+    "The presentment title of the shipping option."
+    presentmentTitle: String
+    "The title of the shipping option."
+    title: String
+}
+
+"Represents a Subscription Delivery Policy."
+type SubscriptionDeliveryPolicy {
+    "Specific anchor dates upon which the delivery interval calculations should be made."
+    anchors: [SellingPlanAnchor!]!
+    "The kind of interval that is associated with this schedule (e.g. Monthly, Weekly, etc)."
+    interval: SellingPlanInterval!
+    "The number of delivery intervals between deliveries."
+    intervalCount: Int!
+}
+
+"Represents what a particular discount reduces from a line price."
+type SubscriptionDiscountAllocation {
+    "Allocation amount."
+    amount: MoneyV2!
+    "Discount that created the allocation."
+    discount: SubscriptionDiscount!
+}
+
+type SubscriptionDiscountConnection {
+    "A list of edges."
+    edges: [SubscriptionDiscountEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+type SubscriptionDiscountEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SubscriptionDiscountEdge."
+    node: SubscriptionDiscount!
+}
+
+"Represents the subscription lines the discount applies on."
+type SubscriptionDiscountEntitledLines {
+    "Specify whether the subscription discount will apply on all subscription lines."
+    all: Boolean!
+    "The list of subscription lines associated with the subscription discount."
+    lines(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionLineConnection!
+}
+
+"The value of the discount and how it will be applied."
+type SubscriptionDiscountFixedAmountValue {
+    "The fixed amount value of the discount."
+    amount: MoneyV2!
+    "Whether the amount is applied per item."
+    appliesOnEachItem: Boolean!
+}
+
+"The percentage value of the discount."
+type SubscriptionDiscountPercentageValue {
+    "The percentage value of the discount."
+    percentage: Int!
+}
+
+"Represents a Subscription Draft."
+type SubscriptionDraft implements Node {
+    "The billing policy for the subscription contract."
+    billingPolicy: SubscriptionBillingPolicy!
+    "The currency used for the subscription contract."
+    currencyCode: CurrencyCode!
+    "The customer to whom the subscription contract belongs."
+    customer: Customer!
+    "The customer payment method used for the subscription contract."
+    customerPaymentMethod(
+        "Whether to show the customer's revoked payment method."
+        showRevoked: Boolean = false
+    ): CustomerPaymentMethod
+    "The delivery method for each billing of the subscription contract."
+    deliveryMethod: SubscriptionDeliveryMethod
+    "The delivery policy for the subscription contract."
+    deliveryPolicy: SubscriptionDeliveryPolicy!
+    "The delivery price for each billing the subscription contract."
+    deliveryPrice: MoneyV2
+    "The list of subscription discounts which will be associated with the subscription contract."
+    discounts(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionDiscountConnection!
+    "The list of subscription discounts to be added to the subscription contract."
+    discountsAdded(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionDiscountConnection!
+    "The list of subscription discounts to be removed from the subscription contract."
+    discountsRemoved(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionDiscountConnection!
+    "The list of subscription discounts to be updated on the subscription contract."
+    discountsUpdated(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionDiscountConnection!
+    "Globally unique identifier."
+    id: ID!
+    "The list of subscription lines which will be associated with the subscription contract."
+    lines(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionLineConnection!
+    "The list of subscription lines to be added to the subscription contract."
+    linesAdded(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionLineConnection!
+    "The list of subscription lines to be removed from the subscription contract."
+    linesRemoved(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): SubscriptionLineConnection!
+    "The next billing date for the subscription contract."
+    nextBillingDate: DateTime
+    "The original subscription contract."
+    originalContract: SubscriptionContract
+    """
+
+    Available Shipping Options for a given delivery address. Returns NULL for pending requests.
+    """
+    shippingOptions(
+        "The address to delivery the subscription contract to."
+        deliveryAddress: MailingAddressInput
+    ): SubscriptionShippingOptionResult
+    "The current status of the subscription contract."
+    status: SubscriptionContractSubscriptionStatus
+}
+
+"Return type for `subscriptionDraftCommit` mutation."
+type SubscriptionDraftCommitPayload {
+    "The updated Subscription Contract object."
+    contract: SubscriptionContract
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftDiscountAdd` mutation."
+type SubscriptionDraftDiscountAddPayload {
+    "The added Subscription Discount."
+    discountAdded: SubscriptionManualDiscount
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftDiscountCodeApply` mutation."
+type SubscriptionDraftDiscountCodeApplyPayload {
+    "The added subscription discount."
+    appliedDiscount: SubscriptionAppliedCodeDiscount
+    "The subscription contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftDiscountRemove` mutation."
+type SubscriptionDraftDiscountRemovePayload {
+    "The removed subscription draft discount."
+    discountRemoved: SubscriptionDiscount
+    "The subscription contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftDiscountUpdate` mutation."
+type SubscriptionDraftDiscountUpdatePayload {
+    "The updated Subscription Discount."
+    discountUpdated: SubscriptionManualDiscount
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftFreeShippingDiscountAdd` mutation."
+type SubscriptionDraftFreeShippingDiscountAddPayload {
+    "The added subscription free shipping discount."
+    discountAdded: SubscriptionManualDiscount
+    "The subscription contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftFreeShippingDiscountUpdate` mutation."
+type SubscriptionDraftFreeShippingDiscountUpdatePayload {
+    "The updated Subscription Discount."
+    discountUpdated: SubscriptionManualDiscount
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftLineAdd` mutation."
+type SubscriptionDraftLineAddPayload {
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "The added Subscription Line."
+    lineAdded: SubscriptionLine
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftLineRemove` mutation."
+type SubscriptionDraftLineRemovePayload {
+    "The list of updated subscription discounts impacted by the removed line."
+    discountsUpdated: [SubscriptionManualDiscount!]
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "The removed Subscription Line."
+    lineRemoved: SubscriptionLine
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftLineUpdate` mutation."
+type SubscriptionDraftLineUpdatePayload {
+    "The Subscription Contract draft object."
+    draft: SubscriptionDraft
+    "The updated Subscription Line."
+    lineUpdated: SubscriptionLine
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Return type for `subscriptionDraftUpdate` mutation."
+type SubscriptionDraftUpdatePayload {
+    "The Subscription Draft object."
+    draft: SubscriptionDraft
+    "List of errors that occurred executing the mutation."
+    userErrors: [SubscriptionDraftUserError!]!
+}
+
+"Represents a Subscription Draft error."
+type SubscriptionDraftUserError implements DisplayableError {
+    "Error code to uniquely identify the error."
+    code: SubscriptionDraftErrorCode
+    "Path to the input field which caused the error."
+    field: [String!]
+    "The error message."
+    message: String!
+}
+
+"Represents a Subscription Line."
+type SubscriptionLine {
+    "The price per unit for the subscription line in the contract's currency."
+    currentPrice: MoneyV2!
+    "List of custom attributes associated to the line item."
+    customAttributes: [Attribute!]!
+    "Discount allocations."
+    discountAllocations: [SubscriptionDiscountAllocation!]!
+    "The unique identifier."
+    id: ID!
+    "Total line price including all discounts."
+    lineDiscountedPrice: MoneyV2!
+    "Describe the price changes of the line over time."
+    pricingPolicy: SubscriptionPricingPolicy
+    "The product id associated with the subscription line."
+    productId: ID
+    "The quantity of the unit selected for the subscription line."
+    quantity: Int!
+    "Whether physical shipping is required for the variant."
+    requiresShipping: Boolean!
+    """
+
+    The selling plan ID associated to the line.
+
+    Indicates which selling plan was used to create this
+    contract line initially. The selling plan ID is also used to
+    find the associated delivery profile.
+
+    The subscription contract, subscription line, or selling plan might have
+    changed. As a result, the selling plan's attributes might not
+    match the information on the contract.
+    """
+    sellingPlanId: ID
+    """
+
+    The selling plan name associated to the line. This name describes
+    the order line items created from this subscription line
+    for both merchants and customers.
+
+    The value can be different from the selling plan's name, because both
+    the selling plan's name and the subscription line's selling_plan_name
+    attribute can be updated independently.
+    """
+    sellingPlanName: String
+    "Variant SKU number of the item associated with the subscription line."
+    sku: String
+    "Whether the variant is taxable."
+    taxable: Boolean!
+    "Product title of the item associated with the subscription line."
+    title: String!
+    "The product variant id associated with the subscription line."
+    variantId: ID
+    "The image associated with the line item's variant or product."
+    variantImage: Image
+    "Product variant title of the item associated with the subscription line."
+    variantTitle: String
+}
+
+type SubscriptionLineConnection {
+    "A list of edges."
+    edges: [SubscriptionLineEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+type SubscriptionLineEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SubscriptionLineEdge."
+    node: SubscriptionLine!
+}
+
+"Represents a Mailing Address on a Subscription."
+type SubscriptionMailingAddress {
+    "The first line of the address. Typically the street address or PO Box number."
+    address1: String
+    "The second line of the address. Typically the number of the apartment, suite, or unit."
+    address2: String
+    "The name of the city, district, village, or town."
+    city: String
+    "The name of the customer's company or organization."
+    company: String
+    "The name of the country."
+    country: String
+    """
+
+    The two-letter code for the country of the address.
+
+    For example, US.
+    """
+    countryCode: CountryCode
+    "The first name of the customer."
+    firstName: String
+    "The last name of the customer."
+    lastName: String
+    "The full name of the customer, based on firstName and lastName."
+    name: String
+    "A unique phone number for the customer. Formatted using E.164 standard. For example, _+16135551111_."
+    phone: String
+    "The region of the address, such as the province, state, or district."
+    province: String
+    """
+
+    The two-letter code for the region.
+
+    For example, ON.
+    """
+    provinceCode: String
+    "The zip or postal code of the address."
+    zip: String
+}
+
+"Custom subscription discount."
+type SubscriptionManualDiscount {
+    "Entitled line items used to apply the subscription discount on."
+    entitledLines: SubscriptionDiscountEntitledLines!
+    "The unique identifier."
+    id: ID!
+    "The maximum number of times the subscription discount will be applied on orders."
+    recurringCycleLimit: Int
+    "The reason that the discount on the subscription draft is rejected."
+    rejectionReason: SubscriptionDiscountRejectionReason
+    "Type of line the discount applies on."
+    targetType: DiscountTargetType!
+    "The title associated with the subscription discount."
+    title: String
+    "The type of the subscription discount."
+    type: DiscountType!
+    "The number of times the discount was applied."
+    usageCount: Int!
+    "The value of the subscription discount."
+    value: SubscriptionDiscountValue!
+}
+
+type SubscriptionManualDiscountConnection {
+    "A list of edges."
+    edges: [SubscriptionManualDiscountEdge!]!
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+type SubscriptionManualDiscountEdge {
+    "A cursor for use in pagination."
+    cursor: String!
+    "The item at the end of SubscriptionManualDiscountEdge."
+    node: SubscriptionManualDiscount!
+}
+
+"Represents a Subscription Line Pricing Policy."
+type SubscriptionPricingPolicy {
+    "The base price per unit for the subscription line in the contract's currency."
+    basePrice: MoneyV2!
+    "The adjustments per cycle for the subscription line."
+    cycleDiscounts: [SubscriptionCyclePriceAdjustment!]!
+}
+
+"A shipping option to deliver a subscription contract."
+type SubscriptionShippingOption {
+    """
+
+    The carrier service that is providing this shipping option.
+    This field isn't currently supported and returns null.
+    """
+    carrierService: DeliveryCarrierService
+    "The code of the shipping option."
+    code: String!
+    "The description of the shipping option."
+    description: String
+    "If a phone number is required for the shipping option."
+    phoneRequired: Boolean
+    "The presentment title of the shipping option."
+    presentmentTitle: String
+    "The price of the shipping option."
+    price: MoneyV2
+    "The title of the shipping option."
+    title: String!
+}
+
+"Failure determining available shipping options for delivery of a subscription contract."
+type SubscriptionShippingOptionResultFailure {
+    "Failure reason."
+    message: String
+}
+
+"A shipping option for delivery of a subscription contract."
+type SubscriptionShippingOptionResultSuccess {
+    "Available shipping options."
+    shippingOptions: [SubscriptionShippingOption!]!
+}
+
 "Represents a suggested transaction."
 type SuggestedOrderTransaction {
     "The masked account number associated with the payment method."
@@ -13076,6 +14898,26 @@ type TenderTransactionEdge {
     cursor: String!
     "The item at the end of TenderTransactionEdge."
     node: TenderTransaction!
+}
+
+"Transaction fee related to an order transaction."
+type TransactionFee implements Node {
+    "Amount of the fee."
+    amount: MoneyV2!
+    "Flat rate charge for a transaction."
+    flatFee: MoneyV2!
+    "Name of the credit card flat fee."
+    flatFeeName: String
+    "Globally unique identifier."
+    id: ID!
+    "Percentage charge."
+    rate: Decimal!
+    "Name of the credit card rate."
+    rateName: String
+    "Tax amount charged on the fee."
+    taxAmount: MoneyV2!
+    "Name of the type of fee."
+    type: String!
 }
 
 "Translatable content of a resource's field."
@@ -13361,11 +15203,11 @@ enum AppInstallationSortKeys {
     RELEVANCE
 }
 
-"Interval for which pricing details are applied."
+"The billing frequency for the app."
 enum AppPricingInterval {
-    "App plan pricing details are applied annually."
+    "The merchant is billed for this app annually."
     ANNUAL
-    "App plan pricing details are applied every 30 days."
+    "The merchant is billed for this app every 30 days."
     EVERY_30_DAYS
 }
 
@@ -13459,6 +15301,16 @@ enum AutomaticDiscountSortKeys {
     deterministic and should not be used.
     """
     RELEVANCE
+}
+
+"Possible error codes that could be returned by BillingAttemptUserError."
+enum BillingAttemptUserErrorCode {
+    "Input value is blank."
+    BLANK
+    "Subscription contract does not exist."
+    CONTRACT_NOT_FOUND
+    "Input value is invalid."
+    INVALID
 }
 
 "Error codes for failed bulk operations."
@@ -14159,6 +16011,8 @@ enum CurrencyCode {
     BTN
     "Botswana Pula (BWP)."
     BWP
+    "Belarusian Ruble (BYN)."
+    BYN
     "Belarusian Ruble (BYR)."
     BYR @deprecated(reason : "`BYR` is deprecated. Use `BYN` available from version `2021-01` onwards instead.")
     "Belize Dollar (BZD)."
@@ -14457,6 +16311,57 @@ enum CustomerMarketingOptInLevel {
     UNKNOWN
 }
 
+"Possible error codes that could be returned by CustomerPaymentMethodUserError."
+enum CustomerPaymentMethodUserErrorCode {
+    "Input value is invalid."
+    INVALID
+    "Input value is not present."
+    PRESENT
+    "Input value is already taken."
+    TAKEN
+}
+
+"""
+
+Possible subscriber states of a customer defined by their subscription contracts.
+"""
+enum CustomerProductSubscriberStatus {
+    """
+
+    The customer has at least one active subscription contract.
+    """
+    ACTIVE
+    """
+
+    The customer's last subscription contract was cancelled and there are no other active or paused
+    subscription contracts.
+    """
+    CANCELLED
+    """
+
+    The customer's last subscription contract expired and there are no other active or paused
+    subscription contracts.
+    """
+    EXPIRED
+    """
+
+    The customer's last subscription contract failed and there are no other active or paused
+    subscription contracts.
+    """
+    FAILED
+    """
+
+    The customer has never had a subscription contract.
+    """
+    NEVER_SUBSCRIBED
+    """
+
+    The customer has at least one paused subscription contract and there are no other active
+    subscription contracts.
+    """
+    PAUSED
+}
+
 "The set of valid sort keys for the CustomerSavedSearch query."
 enum CustomerSavedSearchSortKeys {
     "Sort by the `id` value."
@@ -14742,6 +16647,22 @@ enum DiscountStatus {
     SCHEDULED
 }
 
+"The type of line a subscription discount is applied on."
+enum DiscountTargetType {
+    "Line item."
+    LINE_ITEM
+    "Shipping line."
+    SHIPPING_LINE
+}
+
+"The original type of the discount."
+enum DiscountType {
+    "Code discount type."
+    CODE_DISCOUNT
+    "Manual discount type."
+    MANUAL
+}
+
 "The possible statuses of a dispute."
 enum DisputeStatus {
     ACCEPTED
@@ -14844,6 +16765,8 @@ enum FulfillmentDisplayStatus {
     NOT_DELIVERED
     "Displayed as **Out for delivery**."
     OUT_FOR_DELIVERY
+    "Displayed as **Picked up**."
+    PICKED_UP
     "Displayed as **Ready for pickup**."
     READY_FOR_PICKUP
     "Displayed as **Submitted**."
@@ -14895,6 +16818,8 @@ enum FulfillmentOrderAction {
     CREATE_FULFILLMENT
     "Open an external URL to initiate the fulfillment process outside Shopify."
     EXTERNAL
+    "Mark the fulfillment order as open."
+    MARK_AS_OPEN
     "Move a fulfillment order. The corresponding mutation for this action is FulfillmentOrderMove."
     MOVE
     "Send a cancellation request to the fulfillment service of a fulfillment order. The corresponding mutation for this action is FulfillmentOrderSubmitCancellationRequest."
@@ -14972,6 +16897,12 @@ enum FulfillmentOrderRequestStatus {
     UNSUBMITTED
 }
 
+"Possible error codes that could be returned by FulfillmentOrderRescheduleUserError."
+enum FulfillmentOrderRescheduleUserErrorCode {
+    "Fulfillment order could not be found."
+    FULFILLMENT_ORDER_NOT_FOUND
+}
+
 "The set of valid sort keys for the FulfillmentOrder query."
 enum FulfillmentOrderSortKeys {
     "Sort by the `id` value."
@@ -14997,6 +16928,8 @@ enum FulfillmentOrderStatus {
     IN_PROGRESS
     "The fulfillment order has been opened."
     OPEN
+    "The fulfillment order is scheduled for fulfillment."
+    SCHEDULED
 }
 
 "The type of a fulfillment service."
@@ -15420,6 +17353,8 @@ enum OrderCancelReason {
 enum OrderDisplayFinancialStatus {
     "Displayed as **Authorized**."
     AUTHORIZED
+    "Displayed as **Expired**."
+    EXPIRED
     "Displayed as **Paid**."
     PAID
     "Displayed as **Partially paid**."
@@ -15448,6 +17383,8 @@ enum OrderDisplayFulfillmentStatus {
     PENDING_FULFILLMENT
     "Displayed as **Restocked**."
     RESTOCKED
+    "Displayed as **Scheduled**."
+    SCHEDULED
     "Displayed as **Unfulfilled**."
     UNFULFILLED
 }
@@ -15614,6 +17551,24 @@ enum PaymentMethods {
     VISA
 }
 
+"Payment status codes."
+enum PaymentSessionStatusCode {
+    "Payment extended."
+    EXTENDED
+    "Payment rejected."
+    REJECTED
+    "Payment resolved."
+    RESOLVED
+}
+
+"Payment rejection reason codes."
+enum PaymentSessionStatusReasonRejectionCode {
+    "Payment processing failure. No retry."
+    PROCESSING_ERROR
+    "Rejected by risk control."
+    RISKY
+}
+
 "The method by which the price rule's value is allocated to its entitled items."
 enum PriceRuleAllocationMethod {
     "The value will be applied once across the entitled items."
@@ -15626,6 +17581,8 @@ enum PriceRuleAllocationMethod {
 enum PriceRuleErrorCode {
     "Allocation method must be \"across\" for the provided target selection."
     ALLOCATION_METHOD_MUST_BE_ACROSS_FOR_GIVEN_TARGET_SELECTION
+    "Discount must apply on either one time purchase or subscription items, or both."
+    APPLIES_ON_NOTHING
     "Input value is blank."
     BLANK
     BOGO_INVALID_TARGET_SELECTION
@@ -15686,6 +17643,8 @@ enum PriceRuleErrorCode {
     LESS_THAN_OR_EQUAL_TO
     "Missing a required argument."
     MISSING_ARGUMENT
+    "Recurring cycle limit must be 1 when a discount does not apply on subscription items."
+    MULTIPLE_RECURRING_CYCLE_LIMIT_FOR_NON_SUBSCRIPTION_ITEMS
     "Only one of minimum subtotal or minimum quantity condition can be defined."
     PREREQUISITE_SUBTOTAL_AND_QUANTITY_RANGE_BOTH_PRESENT
     "Allocation limit must be a non zero positive number."
@@ -16052,6 +18011,158 @@ enum SearchResultType {
     PRODUCT
 }
 
+"Represents the anchor type."
+enum SellingPlanAnchorType {
+    "Which day of the month, between 1-31."
+    MONTHDAY
+    "Which day of the week, between 1-7."
+    WEEKDAY
+    "Which days of the month and year, month between 1-12, and day between 1-31."
+    YEARDAY
+}
+
+"The set of valid sort keys for the SellingPlanGroup query."
+enum SellingPlanGroupSortKeys {
+    "Sort by the `created_at` value."
+    CREATED_AT
+    "Sort by the `id` value."
+    ID
+    "Sort by the `name` value."
+    NAME
+    """
+
+    During a search (i.e. when the `query` parameter has been specified on the connection) this sorts the
+    results by relevance to the search term(s). When no search query is specified, this sort key is not
+    deterministic and should not be used.
+    """
+    RELEVANCE
+    "Sort by the `updated_at` value."
+    UPDATED_AT
+}
+
+"Possible error codes that could be returned by SellingPlanGroupUserError."
+enum SellingPlanGroupUserErrorCode {
+    "Input value is blank."
+    BLANK
+    "Could not add the resource to the selling plan group."
+    ERROR_ADDING_RESOURCE_TO_GROUP
+    "Input value should be greater than minimum allowed value."
+    GREATER_THAN
+    "Input value should be greater than or equal to minimum allowed value."
+    GREATER_THAN_OR_EQUAL_TO
+    "Selling plan group could not be deleted."
+    GROUP_COULD_NOT_BE_DELETED
+    "Selling plan group does not exist."
+    GROUP_DOES_NOT_EXIST
+    "Input value is invalid."
+    INVALID
+    "Input value should be less than maximum allowed value."
+    LESS_THAN
+    "Input value should be less or equal to maximum allowed value."
+    LESS_THAN_OR_EQUAL_TO
+    "Input value is not a number."
+    NOT_A_NUMBER
+    "Only one pricing policy type can be defined."
+    ONLY_NEED_ONE_PRICING_POLICY_TYPE
+    "Only one pricing policy adjustment value type can be defined."
+    ONLY_NEED_ONE_PRICING_POLICY_VALUE
+    "Selling plan does not exist."
+    PLAN_DOES_NOT_EXIST
+    "Selling plan ID must be specified to update."
+    PLAN_ID_MUST_BE_SPECIFIED_TO_UPDATE
+    "Input value is not present."
+    PRESENT
+    "Pricing policy's adjustment value and adjustment type must match."
+    PRICING_POLICY_ADJUSTMENT_VALUE_AND_TYPE_MUST_MATCH
+    "Product does not exist."
+    PRODUCT_DOES_NOT_EXIST
+    "Product variant does not exist."
+    PRODUCT_VARIANT_DOES_NOT_EXIST
+    "Selling plan's billing and delivery policies anchors must be equal."
+    SELLING_PLAN_BILLING_AND_DELIVERY_POLICY_ANCHORS_MUST_BE_EQUAL
+    "Selling plan's billing cycle must be a multiple of delivery cycle."
+    SELLING_PLAN_BILLING_CYCLE_MUST_BE_A_MULTIPLE_OF_DELIVERY_CYCLE
+    "Missing billing policy."
+    SELLING_PLAN_BILLING_POLICY_MISSING
+    "Must include at least one selling plan."
+    SELLING_PLAN_COUNT_LOWER_BOUND
+    "Exceeded the selling plan limit (20)."
+    SELLING_PLAN_COUNT_UPPER_BOUND
+    "Missing delivery policy."
+    SELLING_PLAN_DELIVERY_POLICY_MISSING
+    "Cannot have multiple selling plans with the same name."
+    SELLING_PLAN_DUPLICATE_NAME
+    "Cannot have multiple selling plans with the same options."
+    SELLING_PLAN_DUPLICATE_OPTIONS
+    "Selling plan's billing policy max cycles must be greater than min cycles."
+    SELLING_PLAN_MAX_CYCLES_MUST_BE_GREATER_THAN_MIN_CYCLES
+    "Cannot define option2 on this selling plan as there's no label on the parent selling plan group."
+    SELLING_PLAN_MISSING_OPTION2_LABEL_ON_PARENT_GROUP
+    "Cannot define option3 on this selling plan as there's no label on the parent selling plan group."
+    SELLING_PLAN_MISSING_OPTION3_LABEL_ON_PARENT_GROUP
+    "Selling plan's option2 is required because option2 exists."
+    SELLING_PLAN_OPTION2_REQUIRED_AS_DEFINED_ON_PARENT_GROUP
+    "Selling plan's option3 is required because option3 exists."
+    SELLING_PLAN_OPTION3_REQUIRED_AS_DEFINED_ON_PARENT_GROUP
+    "Selling plans can't have more than 2 pricing policies."
+    SELLING_PLAN_PRICING_POLICIES_LIMIT
+    "Selling plan's pricing policies must contain one fixed pricing policy."
+    SELLING_PLAN_PRICING_POLICIES_MUST_CONTAIN_A_FIXED_PRICING_POLICY
+    "Input value is already taken."
+    TAKEN
+    "Input value is too long."
+    TOO_LONG
+    "Input value is too short."
+    TOO_SHORT
+}
+
+"Represents valid selling plan interval."
+enum SellingPlanInterval {
+    "Day interval."
+    DAY
+    "Month interval."
+    MONTH
+    "Week interval."
+    WEEK
+    "Year interval."
+    YEAR
+}
+
+"Represents a selling plan pricing policy adjustment type."
+enum SellingPlanPricingPolicyAdjustmentType {
+    "Fixed amount off adjustment."
+    FIXED_AMOUNT
+    "Percentage off adjustment."
+    PERCENTAGE
+    "Price of the policy."
+    PRICE
+}
+
+"Possible intentions of a Delivery Policy."
+enum SellingPlanRecurringDeliveryPolicyIntent {
+    """
+
+    Buyer centric. Mark this delivery policy to define when the buyer should receive the goods.
+    """
+    DELIVERY
+    """
+
+    Merchant centric. Mark this delivery policy to define when the merchant should start fulfillment.
+    """
+    FULFILLMENT_BEGIN
+}
+
+"Possible fulfillment or delivery behaviors of the first fulfillment when the orderis placed before the anchor."
+enum SellingPlanRecurringDeliveryPolicyPreAnchorBehavior {
+    """
+
+    Orders placed can be fulfilled / delivered immediately. Orders placed inside a cutoff can be fulfilled / delivered at the next anchor.
+    """
+    ASAP
+    "Orders placed can be fulfilled / delivered at the next anchor date. Ordersplaced inside a cutoff will skip the next anchor and can be fulfilled / delivered at the following anchor."
+    NEXT
+}
+
 """
 
 Possible branding of a shop.
@@ -16247,6 +18358,114 @@ enum StagedUploadTargetGenerateUploadResource {
     TIMELINE
     "Merchandising::Video resource representation."
     VIDEO
+}
+
+"Possible error codes that could be returned by SubscriptionContractUserError."
+enum SubscriptionContractErrorCode {
+    "Input value is invalid."
+    INVALID
+}
+
+"Possible status values of the last payment on a subscription contract."
+enum SubscriptionContractLastPaymentStatus {
+    "Failed subscription billing attempt."
+    FAILED
+    "Successful subscription billing attempt."
+    SUCCEEDED
+}
+
+"Possible status values of a subscription."
+enum SubscriptionContractSubscriptionStatus {
+    "Active subscription contract."
+    ACTIVE
+    "Cancelled subscription contract."
+    CANCELLED
+    "Expired subscription contract."
+    EXPIRED
+    "Failed subscription contract."
+    FAILED
+    "Paused subscription contract."
+    PAUSED
+}
+
+"The reason a discount on a subscription draft was rejected."
+enum SubscriptionDiscountRejectionReason {
+    "Discount is inactive."
+    CURRENTLY_INACTIVE
+    "Given customer does not qualify for the discount."
+    CUSTOMER_NOT_ELIGIBLE
+    "Customer usage limit has been reached."
+    CUSTOMER_USAGE_LIMIT_REACHED
+    "Purchase type does not qualify for the discount."
+    INCOMPATIBLE_PURCHASE_TYPE
+    "Internal error during discount code validation."
+    INTERNAL_ERROR
+    "Discount code is not found."
+    NOT_FOUND
+    "Discount does not apply to any of the given line items."
+    NO_ENTITLED_LINE_ITEMS
+    "No applicable shipping lines."
+    NO_ENTITLED_SHIPPING_LINES
+    "Purchase amount of items does not qualify for the discount."
+    PURCHASE_NOT_IN_RANGE
+    "Quantity of items does not qualify for the discount."
+    QUANTITY_NOT_IN_RANGE
+    "Discount usage limit has been reached."
+    USAGE_LIMIT_REACHED
+}
+
+"Possible error codes that could be returned by SubscriptionDraftUserError."
+enum SubscriptionDraftErrorCode {
+    "This line has already been removed."
+    ALREADY_REMOVED
+    "Input value is blank."
+    BLANK
+    "Subscription draft has been already committed."
+    COMMITTED
+    "Currency is not enabled."
+    CURRENCY_NOT_ENABLED
+    "The payment method customer must be the same as the contract customer."
+    CUSTOMER_MISMATCH
+    "The after cycle attribute must be unique between cycle discounts."
+    CYCLE_DISCOUNTS_UNIQUE_AFTER_CYCLE
+    "The delivery method can't be blank if any lines require shipping."
+    DELIVERY_METHOD_REQUIRED
+    "The delivery policy interval must be a multiple of the billing policy interval."
+    DELIVERY_MUST_BE_MULTIPLE_OF_BILLING
+    "Input value should be greater than minimum allowed value."
+    GREATER_THAN
+    "Input value should be greater than or equal to minimum allowed value."
+    GREATER_THAN_OR_EQUAL_TO
+    "Input value is invalid."
+    INVALID
+    "The adjustment value must the same type as the adjustment type."
+    INVALID_ADJUSTMENT_TYPE
+    "The adjustment value must be either fixed_value or percentage."
+    INVALID_ADJUSTMENT_VALUE
+    "Next billing date is invalid."
+    INVALID_BILLING_DATE
+    "Must have at least one line."
+    INVALID_LINES
+    "Input value should be less than maximum allowed value."
+    LESS_THAN
+    "Input value should be less or equal to maximum allowed value."
+    LESS_THAN_OR_EQUAL_TO
+    "The value is not an integer."
+    NOT_AN_INTEGER
+    "Value is not in range."
+    NOT_IN_RANGE
+    "Discount must have at least one entitled line."
+    NO_ENTITLED_LINES
+    "Input value is not present."
+    PRESENCE
+    "The maximum number of cycles must be greater than the minimum."
+    SELLING_PLAN_MAX_CYCLES_MUST_BE_GREATER_THAN_MIN_CYCLES
+    "Another operation updated the contract concurrently as the commit was in progress."
+    STALE_CONTRACT
+    "Input value is too long."
+    TOO_LONG
+    "Input value is too short."
+    TOO_SHORT
 }
 
 "Specifies the kind of the suggested order transaction."
@@ -16448,6 +18667,12 @@ enum WebhookSubscriptionTopic {
     CUSTOMER_GROUPS_DELETE
     "The webhook topic for `customer_groups/update` events."
     CUSTOMER_GROUPS_UPDATE
+    "The webhook topic for `customer_payment_methods/create` events."
+    CUSTOMER_PAYMENT_METHODS_CREATE
+    "The webhook topic for `customer_payment_methods/revoke` events."
+    CUSTOMER_PAYMENT_METHODS_REVOKE
+    "The webhook topic for `customer_payment_methods/update` events."
+    CUSTOMER_PAYMENT_METHODS_UPDATE
     "The webhook topic for `disputes/create` events."
     DISPUTES_CREATE
     "The webhook topic for `disputes/update` events."
@@ -16544,6 +18769,14 @@ enum WebhookSubscriptionTopic {
     SHIPPING_ADDRESSES_UPDATE
     "The webhook topic for `shop/update` events."
     SHOP_UPDATE
+    "The webhook topic for `subscription_billing_attempts/failure` events."
+    SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE
+    "The webhook topic for `subscription_billing_attempts/success` events."
+    SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS
+    "The webhook topic for `subscription_contracts/create` events."
+    SUBSCRIPTION_CONTRACTS_CREATE
+    "The webhook topic for `subscription_contracts/update` events."
+    SUBSCRIPTION_CONTRACTS_UPDATE
     "The webhook topic for `tax_services/create` events."
     TAX_SERVICES_CREATE
     "The webhook topic for `tax_services/update` events."
@@ -16881,6 +19114,10 @@ input DeliveryProfileInput {
     name: String
     "The location groups associated with the profile."
     profileLocationGroups: [DeliveryProfileLocationGroupInput!]
+    "The selling plan groups to be associated with this profile."
+    sellingPlanGroupsToAssociate: [ID!]
+    "The selling plan groups to be dissociated with this profile."
+    sellingPlanGroupsToDissociate: [ID!]
     "The product variant ids to be associated with this profile."
     variantsToAssociate: [ID!]
     "The product variant ids to be dissociated from this profile and returned to the default profile."
@@ -16995,6 +19232,8 @@ input DiscountCodeBasicInput {
     endsAt: DateTime
     "The minimum subtotal or quantity that's required for the discount to be applied."
     minimumRequirement: DiscountMinimumRequirementInput
+    "The number of times a discount applies on recurring purchases (subscriptions)."
+    recurringCycleLimit: Int
     "The date and time when the discount starts."
     startsAt: DateTime
     "The title of the discount."
@@ -17029,6 +19268,10 @@ input DiscountCodeBxgyInput {
 
 "Specifies input field to create or update free shipping code discount."
 input DiscountCodeFreeShippingInput {
+    "Whether the discount applies on regular one-time-purchase items."
+    appliesOnOneTimePurchase: Boolean
+    "Whether the discount applies on subscription items."
+    appliesOnSubscription: Boolean
     "Whether the discount can be applied only once per customer."
     appliesOncePerCustomer: Boolean
     "The code to use the discount."
@@ -17043,6 +19286,8 @@ input DiscountCodeFreeShippingInput {
     maximumShippingPrice: Decimal
     "The minimum subtotal or quantity that's required for the discount to be applied."
     minimumRequirement: DiscountMinimumRequirementInput
+    "The number of times a discount applies on recurring purchases (subscriptions)."
+    recurringCycleLimit: Int
     "The date and time when the discount starts."
     startsAt: DateTime
     "The title of the discount."
@@ -17087,6 +19332,10 @@ input DiscountCustomerBuysValueInput {
 
 "Specifies the items that will be discounted, the quantity of items that will be discounted, and the value of discount."
 input DiscountCustomerGetsInput {
+    "Whether the discount applies on regular one-time-purchase items."
+    appliesOnOneTimePurchase: Boolean
+    "Whether the discount applies on subscription items."
+    appliesOnSubscription: Boolean
     "The IDs of the items that the customer gets. The items can be either collections or products."
     items: DiscountItemsInput
     "The quantity of items discounted and the discount value."
@@ -17815,6 +20064,14 @@ input OrderTransactionInput {
     parentId: ID
 }
 
+"Reason of the payment status."
+input PaymentSessionRejectionReasonInput {
+    "The reason code."
+    code: PaymentSessionStatusReasonRejectionCode!
+    "A custom localized message for the merchant."
+    merchantMessage: String
+}
+
 "Specifies the input fields to update a price rule customer selection."
 input PriceRuleCustomerSelectionInput {
     "List of customers to add to the current list of customers to whom the price rule applies. `savedSearchIds` must be empty."
@@ -18067,6 +20324,8 @@ input ProductInput {
     If true, then the old handle is redirected to the new one automatically.
     """
     redirectNewHandle: Boolean = false
+    "Whether the product can only be purchased with a selling plan. If set to `true` on an already existing product, then the product will be marked unavailable on channels that don't support subscriptions."
+    requiresSellingPlan: Boolean
     "The SEO information associated with the product."
     seo: SEOInput
     "The status of the product."
@@ -18290,6 +20549,165 @@ input ScriptTagInput {
     src: URL
 }
 
+"Specifies the input fields required to create or update a selling plan anchor."
+input SellingPlanAnchorInput {
+    """
+
+    The day of the anchor.
+
+    When `type` is WEEKDAY, the value must be between 1-7. Shopify interprets
+    the days of the week according to ISO 8601, where 1 is Monday.
+
+    If `type` is not WEEKDAY, then the value must be between 1-31.
+    """
+    day: Int
+    """
+
+    The month of the anchor. If type is different than YEARDAY, this field must be null, otherwise it must be
+    between 1-12.
+    """
+    month: Int
+    """
+
+    Represents the anchor type, must be one of WEEKDAY, MONTHDAY, YEARDAY.
+    """
+    type: SellingPlanAnchorType
+}
+
+"Specifies the input fields required to create or update a billing policy type."
+input SellingPlanBillingPolicyInput {
+    "Recurring billing policy details."
+    recurring: SellingPlanRecurringBillingPolicyInput
+}
+
+"Specifies the input fields to create or update a delivery policy."
+input SellingPlanDeliveryPolicyInput {
+    "Recurring delivery policy details."
+    recurring: SellingPlanRecurringDeliveryPolicyInput
+}
+
+"Specifies the input fields required to create or update a fixed selling plan pricing policy."
+input SellingPlanFixedPricingPolicyInput {
+    "Price adjustment type defined by the policy."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType
+    "Price adjustment value defined by the policy."
+    adjustmentValue: SellingPlanPricingPolicyValueInput
+    "ID of the pricing policy."
+    id: ID
+}
+
+"Specifies the input fields required to create or update a selling plan group."
+input SellingPlanGroupInput {
+    "Identifier for app, exposed in Liquid and product JSON."
+    appId: String
+    "Merchant facing description of the selling plan group."
+    description: String
+    "Merchant facing label of the selling plan group."
+    merchantCode: String
+    "Buyer facing label of the selling plan group."
+    name: String
+    "Options available to describe the selling plan group."
+    options: [String!]
+    "Relative value for display purposes of the selling plan group. A lower position will be displayed before a higher one."
+    position: Int
+    "List of selling plans to create."
+    sellingPlansToCreate: [SellingPlanInput!]
+    "List of selling plans ids to delete."
+    sellingPlansToDelete: [ID!]
+    "List of selling plans to update."
+    sellingPlansToUpdate: [SellingPlanInput!]
+}
+
+"Specifies resource association with a Selling Plan Group."
+input SellingPlanGroupResourceInput {
+    "The IDs of the Products to add to the Selling Plan Group."
+    productIds: [ID!]
+    "The IDs of the Variants to add to the Selling Plan Group."
+    productVariantIds: [ID!]
+}
+
+"Specifies the input fields to create or update a selling plan."
+input SellingPlanInput {
+    "Selling plan policy which describes the billing details."
+    billingPolicy: SellingPlanBillingPolicyInput
+    "Selling plan policy which describes the delivery details."
+    deliveryPolicy: SellingPlanDeliveryPolicyInput
+    "Buyer facing string which describes the selling plan commitment."
+    description: String
+    "ID of the selling plan."
+    id: ID
+    "Buyer facing string which describes the selling plan content."
+    name: String
+    "Values of all options available on the selling plan."
+    options: [String!]
+    "Relative value for display purposes of this plan. A lower position will be displayed before a higher one."
+    position: Int
+    """
+
+    Pricing policies which describe the pricing details. Each selling plan
+    can only contain a maximum of 2 pricing policies.
+    """
+    pricingPolicies: [SellingPlanPricingPolicyInput!]
+}
+
+"Specifies the input fields required to create or update a selling plan pricing policy."
+input SellingPlanPricingPolicyInput {
+    "Fixed pricing policy details."
+    fixed: SellingPlanFixedPricingPolicyInput
+    "Recurring pricing policy details."
+    recurring: SellingPlanRecurringPricingPolicyInput
+}
+
+"Specifies the input fields required to create or update a pricing policy adjustment value."
+input SellingPlanPricingPolicyValueInput {
+    "Defines fixed value for an fixed amount off or a new policy price."
+    fixedValue: Decimal
+    "Defines percentage value."
+    percentage: Float
+}
+
+"Specifies the input fields required to create or update a recurring billing policy."
+input SellingPlanRecurringBillingPolicyInput {
+    "Specific anchor dates upon which the billing interval calculations should be made."
+    anchors: [SellingPlanAnchorInput!]
+    "The billing frequency, it can be either: day, week, month or year."
+    interval: SellingPlanInterval
+    "The number of intervals between billings."
+    intervalCount: Int
+    "Maximum number of billing iterations."
+    maxCycles: Int
+    "Minimum number of billing iterations."
+    minCycles: Int
+}
+
+"Specifies the input fields to create or update a recurring delivery policy."
+input SellingPlanRecurringDeliveryPolicyInput {
+    "Specific anchor dates upon which the delivery interval calculations should be made."
+    anchors: [SellingPlanAnchorInput!]
+    "A buffer period for orders to be included in a cycle."
+    cutoff: Int
+    "Intention of this delivery policy, it can be either: delivery or fulfillment."
+    intent: SellingPlanRecurringDeliveryPolicyIntent
+    "The delivery frequency, it can be either: day, week, month or year."
+    interval: SellingPlanInterval
+    "The number of intervals between deliveries."
+    intervalCount: Int
+    "The pre anchor behavior. It can be either: asap or next."
+    preAnchorBehavior: SellingPlanRecurringDeliveryPolicyPreAnchorBehavior
+}
+
+"Specifies the input fields required to create or update a recurring selling plan pricing policy."
+input SellingPlanRecurringPricingPolicyInput {
+    "Price adjustment type defined by the policy."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType
+    "Price adjustment value defined by the policy."
+    adjustmentValue: SellingPlanPricingPolicyValueInput
+    "Cycle after which the pricing policy applies. If not provided the policy will be applicable from the first cycle."
+    afterCycle: Int!
+    "ID of the pricing policy."
+    id: ID
+}
+
 "Specifies the shipping details for the order."
 input ShippingLineInput {
     "Price of the shipping rate."
@@ -18375,6 +20793,221 @@ input StorefrontAccessTokenDeleteInput {
 input StorefrontAccessTokenInput {
     "A title for the storefront access token."
     title: String!
+}
+
+"Specifies the fields required to complete a subscription billing attempt."
+input SubscriptionBillingAttemptInput {
+    "A unique key generated by the client to avoid duplicate payments."
+    idempotencyKey: String!
+}
+
+"Specifies the input fields for a Subscription Billing Policy."
+input SubscriptionBillingPolicyInput {
+    "Specific anchor dates upon which the billing interval calculations should be made."
+    anchors: [SellingPlanAnchorInput!] = []
+    "The kind of interval that is associated with this schedule (e.g. Monthly, Weekly, etc)."
+    interval: SellingPlanInterval!
+    "The number of billing intervals between invoices."
+    intervalCount: Int!
+    "Maximum amount of cycles required in the subscription."
+    maxCycles: Int
+    "Minimum amount of cycles required in the subscription."
+    minCycles: Int
+}
+
+"Specifies the input fields required to create a Subscription Contract."
+input SubscriptionContractCreateInput {
+    "The attributes used as input for the Subscription Draft."
+    contract: SubscriptionDraftInput!
+    "The currency used for the subscription contract."
+    currencyCode: CurrencyCode!
+    "The ID of the customer to associate with the subscription contract."
+    customerId: ID!
+    "The next billing date for the subscription contract."
+    nextBillingDate: DateTime!
+}
+
+"""
+
+Specifies delivery method fields for a subscription draft.
+This is an input union: one, and only one, field can be provided.
+The field provided will determine which delivery method is to be used.
+
+Note: Only `shipping` is supported for now, but other inputs will be
+added as they become supported in subscriptions.
+"""
+input SubscriptionDeliveryMethodInput {
+    "Shipping delivery method input."
+    shipping: SubscriptionDeliveryMethodShippingInput
+}
+
+"""
+
+Specifies shipping delivery method fields.
+
+This input accepts partial input. When a field is not provided,
+its prior value is left unchanged.
+"""
+input SubscriptionDeliveryMethodShippingInput {
+    "The address to ship to."
+    address: MailingAddressInput
+    "The details of the shipping method to use."
+    shippingOption: SubscriptionDeliveryMethodShippingOptionInput
+}
+
+"Specifies shipping option fields."
+input SubscriptionDeliveryMethodShippingOptionInput {
+    "The carrier service ID of the shipping option."
+    carrierServiceId: ID
+    "The code of the shipping option."
+    code: String
+    "The description of the shipping option."
+    description: String
+    "The presentment title of the shipping option."
+    presentmentTitle: String
+    "The title of the shipping option."
+    title: String
+}
+
+"Specifies the input fields for a Subscription Delivery Policy."
+input SubscriptionDeliveryPolicyInput {
+    "Specific anchor dates upon which the delivery interval calculations should be made."
+    anchors: [SellingPlanAnchorInput!] = []
+    "The kind of interval that is associated with this schedule (e.g. Monthly, Weekly, etc)."
+    interval: SellingPlanInterval!
+    "The number of billing intervals between invoices."
+    intervalCount: Int!
+}
+
+"Specifies the input fields required to create a Subscription Draft."
+input SubscriptionDraftInput {
+    "The billing policy for the subscription contract."
+    billingPolicy: SubscriptionBillingPolicyInput
+    "The delivery method for the subscription contract."
+    deliveryMethod: SubscriptionDeliveryMethodInput
+    "The delivery policy for the subscription contract."
+    deliveryPolicy: SubscriptionDeliveryPolicyInput
+    "The shipping price for each renewal the subscription contract."
+    deliveryPrice: Decimal
+    "The next billing date for the subscription contract."
+    nextBillingDate: DateTime
+    "The ID of the payment method to be used for the subscription contract."
+    paymentMethodId: ID
+    "The current status of the subscription contract."
+    status: SubscriptionContractSubscriptionStatus
+}
+
+"Specifies the input fields of a subscription free shipping discount on a contract."
+input SubscriptionFreeShippingDiscountInput {
+    "The maximum number of times the subscription free shipping discount will be applied on orders."
+    recurringCycleLimit: Int
+    "The title associated with the subscription free shipping discount."
+    title: String
+}
+
+"Specifies the input fields required to add a new subscription line to a contract."
+input SubscriptionLineInput {
+    "The price of the product."
+    currentPrice: Decimal!
+    "The custom attributes for this subscription line."
+    customAttributes: [AttributeInput!]
+    "Describes expected price changes of the subscription line over time."
+    pricingPolicy: SubscriptionPricingPolicyInput
+    "The ID of the product variant the subscription line refers to."
+    productVariantId: ID!
+    "The quantity of the product."
+    quantity: Int!
+    "The selling plan for the subscription line."
+    sellingPlanId: ID
+    """
+
+    The selling plan name for the subscription line.
+
+    Defaults to using the selling plan's current name when not specified.
+    """
+    sellingPlanName: String
+}
+
+"Specifies the input fields required to update a subscription line on a contract."
+input SubscriptionLineUpdateInput {
+    "The price of the product."
+    currentPrice: Decimal
+    "The custom attributes for this subscription line."
+    customAttributes: [AttributeInput!]
+    "Describes expected price changes of the subscription line over time."
+    pricingPolicy: SubscriptionPricingPolicyInput
+    "The ID of the product variant the subscription line refers to."
+    productVariantId: ID
+    "The quantity of the product."
+    quantity: Int
+    "The selling plan for the subscription line."
+    sellingPlanId: ID
+    "The selling plan name for the subscription line."
+    sellingPlanName: String
+}
+
+"Represents the subscription lines the discount applies on."
+input SubscriptionManualDiscountEntitledLinesInput {
+    "Specify whether the subscription discount will apply on all subscription lines."
+    all: Boolean
+    "The ID of the lines to add to or remove from the subscription discount."
+    lines: SubscriptionManualDiscountLinesInput
+}
+
+"Specifies the fixed amount value of the discount and distribution on the lines."
+input SubscriptionManualDiscountFixedAmountInput {
+    "Fixed amount value."
+    amount: Float
+    "Whether the amount is intended per line item or once per subscription."
+    appliesOnEachItem: Boolean
+}
+
+"Specifies the input fields of a subscription discount on a contract."
+input SubscriptionManualDiscountInput {
+    "Entitled line items used to apply the subscription discount on."
+    entitledLines: SubscriptionManualDiscountEntitledLinesInput
+    "The maximum number of times the subscription discount will be applied on orders."
+    recurringCycleLimit: Int
+    "The title associated with the subscription discount."
+    title: String
+    "Percentage or fixed amount value of the discount."
+    value: SubscriptionManualDiscountValueInput
+}
+
+"Line items that a the discount refers to."
+input SubscriptionManualDiscountLinesInput {
+    "The ID of the lines to add to the subscription discount."
+    add: [ID!]
+    "The ID of the lines to remove from the subscription discount."
+    remove: [ID!]
+}
+
+"Specifies the discount value and its distribution."
+input SubscriptionManualDiscountValueInput {
+    "Fixed amount input in the currency defined by the subscription."
+    fixedAmount: SubscriptionManualDiscountFixedAmountInput
+    "The percentage value of the discount. Value must be between 0 - 100."
+    percentage: Int
+}
+
+"An array containing all pricing changes for each billing cycle."
+input SubscriptionPricingPolicyCycleDiscountsInput {
+    "The price adjustment type."
+    adjustmentType: SellingPlanPricingPolicyAdjustmentType!
+    "The price adjustment value."
+    adjustmentValue: SellingPlanPricingPolicyValueInput!
+    "The cycle after which the pricing policy applies."
+    afterCycle: Int!
+    "The computed price after the adjustments are applied."
+    computedPrice: Decimal!
+}
+
+"Describes expected price changes of the subscription line over time."
+input SubscriptionPricingPolicyInput {
+    "The base price per unit for the subscription line in the contract's currency."
+    basePrice: Decimal!
+    "An array containing all pricing changes for each billing cycle."
+    cycleDiscounts: [SubscriptionPricingPolicyCycleDiscountsInput!]!
 }
 
 "Specifies the fields for tracking information."
