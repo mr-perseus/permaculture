@@ -75,9 +75,8 @@ const Subscriptions = ({
                     heading="Create subscriptions"
                     action={{
                         content: 'Create subscription',
-                        onAction() {
-                            // eslint-disable-next-line no-void
-                            void router.push('/subscriptions/new');
+                        async onAction() {
+                            await router.push('/subscriptions/new');
                         },
                     }}
                     image={img}
