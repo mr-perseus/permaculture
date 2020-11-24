@@ -22,11 +22,12 @@ const {
     SHOPIFY_API_KEY,
     HOST,
     SHOPIFY_ACCESS_TOKEN,
+    STORE_ID,
 } = process.env;
 
-if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET_KEY || !HOST) {
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET_KEY || !HOST || !STORE_ID) {
     throw new Error(
-        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET_KEY, HOST',
+        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET_KEY, HOST, STORE_ID',
     );
 }
 
@@ -70,7 +71,7 @@ app.prepare()
             graphQLProxy({
                 version: ApiVersion.Unstable,
                 password: SHOPIFY_ACCESS_TOKEN,
-                shop: 'https://perma-subs-test.myshopify.com',
+                shop: `https://${STORE_ID}.myshopify.com`,
             }),
         );
 
