@@ -2,6 +2,7 @@
 
 -   Install Shopify Theme Kit: https://shopify.github.io/themekit/
 -   Get theme id: `theme get --list -p={your_shopify_access_token} -s={store-id}.myshopify.com`
+    The access token is the one you stored in the .env file in the project's root folder.
 -   Create config.yml
 
 ```
