@@ -48,7 +48,6 @@
         "dev": "nodemon",
         "build": "next build && tsc --project tsconfig.server.json",
         "start": "node dist/index.js",
-        "ngrok": "ngrok start permaculture -region=eu",
         "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
         "lintFix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
         "clean": "del-cli .next dist",
