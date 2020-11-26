@@ -10,7 +10,9 @@
 1. Change to other directory without existing .shopify-cli.yml file.
 2. Run `shopify connect`
 3. Move .env file to directory admin-extension.
-4. Add to .env file: `EXTENSION_TITLE=admin-extension`
+4. If you already registered your extension before, you also need to do those steps:
+5. Add to .env file: `EXTENSION_TITLE={EXTENSION_TITLE}`
+6. Add to .env file: `EXTENSION_ID={YOUR_EXTENSION_ID}` (You can find out your extension id by opening https://partners.shopify.com/ -> Apps -> {YOUR_APP} -> Extensions -> {YOUR_PRODUCT_SUBSCRIPTION_EXTENSION} -> The id after "product_subscription/" is the extension id)
 
 ### Manually
 
