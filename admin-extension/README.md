@@ -1,49 +1,30 @@
-# Setup
+# Run your app
 
-## CLI
-If you have grabbed this template from the Shopify CLI you should be good to go!
+1. Install dependencies with `npm install` or `yarn install`
+2. Run `shopify serve`
 
-Start developing your awesome extension.
+# Deploy to Shopify
 
+### With shopify connect
 
-## From github
-If you grabbed this template directly from github:
+1. Change to other directory without existing .shopify-cli.yml file.
+2. Run `shopify connect`
+3. Move .env file to directory admin-extension.
+4. Add to .env file: `EXTENSION_TITLE=admin-extension`
 
-#### npm
-```bash
-## With npm
-npm install
+### Manually
 
-npm run generate -- --type=PRODUCT_SUBSCRIPTION
+Create .env file:
 
-## With yarn
-yarn
-
-yarn generate --type=PRODUCT_SUBSCRIPTION
+```
+SHOPIFY_API_KEY={APP_API_KEY}
+SHOPIFY_API_SECRET={APP_API_SECRET_KEY}
+SHOP={STORE_ID}.myshopify.com
+EXTENSION_TITLE=admin-extension
 ```
 
-### Available extensions:
-  - PRODUCT_SUBSCRIPTION
+## Register and Push
 
-**Note:**
-Once you're setup, you may delete the `scripts` folder as you will no longer need it.
+`shopify register`
 
-Documentation on all of the components and utilities in the `argo-admin` library can be found in the [docs folder](./docs).
-
-### Local development
-
-During the setup, a new script has been added to your `package.json` for local development. Run the command to start developing locally. See [Local development with argo-admin-cli](https://www.npmjs.com/package/@shopify/argo-admin-cli#local-development).
-
-```bash
-  npm run server
-```
-
-Your starting file is the index file in the root folder (`index.js`, `index.ts`, or `index.tsx`).
-
-### Build
-
-During the setup, a new script has been added to your `package.json` for building your code. Run the command to start developing locally. See [Build with argo-admin-cli](https://www.npmjs.com/package/@shopify/argo-admin-cli#build).
-
-```bash
-  npm run build
-```
+`shopify push`

@@ -18,16 +18,16 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const {
-    SHOPIFY_API_SECRET_KEY,
+    SHOPIFY_API_SECRET,
     SHOPIFY_API_KEY,
     HOST,
     SHOPIFY_ACCESS_TOKEN,
-    STORE_ID,
+    SHOP,
 } = process.env;
 
-if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET_KEY || !HOST || !STORE_ID) {
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SHOP) {
     throw new Error(
-        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET_KEY, HOST, STORE_ID',
+        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SHOP',
     );
 }
 
@@ -42,12 +42,12 @@ app.prepare()
 
         const router = new Router();
         server.use(session({ sameSite: 'none', secure: true }, server));
-        server.keys = [SHOPIFY_API_SECRET_KEY];
+        server.keys = [SHOPIFY_API_SECRET];
 
         server.use(
             createShopifyAuth({
                 apiKey: SHOPIFY_API_KEY,
-                secret: SHOPIFY_API_SECRET_KEY,
+                secret: SHOPIFY_API_SECRET,
                 scopes: [
                     'read_products',
                     'write_products',
@@ -56,6 +56,7 @@ app.prepare()
                 ],
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session as Session;
+                    console.log('accessToken', accessToken);
                     ctx.cookies.set('shopOrigin', shop, {
                         httpOnly: false,
                         secure: true,
@@ -71,7 +72,7 @@ app.prepare()
             graphQLProxy({
                 version: ApiVersion.Unstable,
                 password: SHOPIFY_ACCESS_TOKEN,
-                shop: `https://${STORE_ID}.myshopify.com`,
+                shop: `https://${SHOP}`,
             }),
         );
 
