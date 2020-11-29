@@ -12385,8 +12385,9 @@ type SellingPlanRecurringDeliveryPolicy {
     """
 
     Specifies if the delivery policy is merchant or buyer-centric.
-    If it is buyer-centric it states the time at which the buyer will receive the goods.
-    If it is merchant-centric it states the time at which the fulfillment should be started.
+    Buyer-centric delivery policies state the time when the buyer will receive the goods.
+    Merchant-centric delivery policies state the time when the fulfillment should be started.
+    Currently, only merchant-centric delivery policies are supported.
     """
     intent: SellingPlanRecurringDeliveryPolicyIntent!
     "The delivery frequency, it can be either: day, week, month or year."
@@ -18142,12 +18143,7 @@ enum SellingPlanPricingPolicyAdjustmentType {
 enum SellingPlanRecurringDeliveryPolicyIntent {
     """
 
-    Buyer centric. Mark this delivery policy to define when the buyer should receive the goods.
-    """
-    DELIVERY
-    """
-
-    Merchant centric. Mark this delivery policy to define when the merchant should start fulfillment.
+    A merchant-centric delivery policy. Mark this delivery policy to define when the merchant should start fulfillment.
     """
     FULFILLMENT_BEGIN
 }
