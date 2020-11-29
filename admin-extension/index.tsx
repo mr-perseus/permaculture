@@ -19,7 +19,8 @@ import ApolloClient, { gql } from 'apollo-boost';
 const getClient = (sessionToken?: string) => {
     return new ApolloClient({
         // todo shop could be read from the url
-        uri: 'https://perma-subs.eu.ngrok.io/graphql',
+        // uri: `${String(process.env.HOST)}/graphql`,
+        uri: `https://bfdd11bf5633.ngrok.io/graphql`,
         fetchOptions: {
             credentials: 'include',
             headers: {
@@ -49,6 +50,87 @@ interface SellingPlanQueryResult {
         }[];
     };
 }
+
+const TEST_CREATE_SELLING_PLAN = gql`
+    mutation {
+        sellingPlanGroupCreate(
+            input: {
+                name: "Subscribe and save"
+                merchantCode: "subscribe-and-save"
+                options: ["Delivery every"]
+                position: 1
+                sellingPlansToCreate: [
+                    {
+                        name: "Delivered every week"
+                        options: "1 Week(s)"
+                        position: 1
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 1 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 1 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 15.0 }
+                                }
+                            }
+                        ]
+                    }
+                    {
+                        name: "Delivered every two weeks"
+                        options: "2 Week(s)"
+                        position: 2
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 2 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 2 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 10.0 }
+                                }
+                            }
+                        ]
+                    }
+                    {
+                        name: "Delivered every three weeks"
+                        options: "3 Week(s)"
+                        position: 3
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 3 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 3 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 5.0 }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            resources: { productIds: [], productVariantIds: [] }
+        ) {
+            sellingPlanGroup {
+                id
+            }
+            userErrors {
+                field
+                message
+            }
+        }
+    }
+`;
 
 const CREATE_SELLING_PLAN = gql`
     mutation($input: SellingPlanGroupInput!) {
@@ -250,15 +332,21 @@ function Create() {
         return translations[locale] || translations.en;
     }, [locale]);
 
+    const { getSessionToken } = useSessionToken();
+
     // Mock plan settings
     const [planTitle, setPlanTitle] = useState('');
     const [percentageOff, setPercentageOff] = useState('');
     const [deliveryFrequency, setDeliveryFrequency] = useState('');
 
-    const onPrimaryAction = useCallback(() => {
-        // todo create plan on API
+    const onPrimaryAction = useCallback(async () => {
+        const token = await getSessionToken();
+        await getClient(token).mutate({
+            mutation: TEST_CREATE_SELLING_PLAN,
+            variables: {},
+        });
         done();
-    }, [done]);
+    }, [done, getSessionToken]);
 
     const actions = useMemo(
         () => (

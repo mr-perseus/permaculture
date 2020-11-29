@@ -159,6 +159,17 @@
           {%- endcapture %}
 
           {% form 'product', product, class:form_classes, novalidate: 'novalidate', data-product-form: '' %}
+            <p><b>TEST111</b></p>
+            {% for group in product.selling_plan_groups %}
+              <p>TEST33331</p>
+              <fieldset>
+                <legend>{{ group.name}}</legend>
+                {% for selling_plan in group.selling_plans %}
+                  <input type="radio" name="selling_plan" value="{{ selling_plan.id }}">
+                  {{ selling_plan.name }}
+                {% endfor %}
+              </fieldset>
+            {% endfor %}
             {% unless product.has_only_default_variant %}
               <div class="product-form__controls-group">
                 {% for option in product.options_with_values %}
