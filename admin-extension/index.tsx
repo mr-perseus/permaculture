@@ -148,10 +148,16 @@ const CREATE_SELLING_PLAN = gql`
 `;
 
 const ADD_SELLING_PLAN = gql`
-    mutation addSellingPlan($id: ID!, $planIds: [ID!]!) {
-        productJoinSellingPlanGroups(id: $id, sellingPlanGroupIds: $planIds) {
+    mutation productJoinSellingPlanGroups(
+        $id: ID!
+        $sellingPlanGroupIds: [ID!]!
+    ) {
+        productJoinSellingPlanGroups(
+            id: $id
+            sellingPlanGroupIds: $sellingPlanGroupIds
+        ) {
             product {
-                title
+                id
             }
             userErrors {
                 code
@@ -257,7 +263,7 @@ function Add() {
                         mutation: ADD_SELLING_PLAN,
                         variables: {
                             id: data.productId,
-                            planIds: selectedPlans,
+                            sellingPlanGroupIds: selectedPlans,
                         },
                     });
 
@@ -343,10 +349,12 @@ function Create() {
         const token = await getSessionToken();
         await getClient(token).mutate({
             mutation: TEST_CREATE_SELLING_PLAN,
-            variables: {},
+            variables: {
+                id: data.productId,
+            },
         });
         done();
-    }, [done, getSessionToken]);
+    }, [data.productId, done, getSessionToken]);
 
     const actions = useMemo(
         () => (
