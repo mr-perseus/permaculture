@@ -13,9 +13,12 @@ import {
     useSessionToken,
 } from '@shopify/argo-admin-react';
 import { gql } from 'apollo-boost';
+import dotenv from 'dotenv';
 import AddSellingPlan from './AddSellingPlan';
 import { getClient } from './adminUtils';
 import { Translations, translations } from './adminTranslations';
+
+dotenv.config();
 
 const TEST_CREATE_SELLING_PLAN = gql`
     mutation {
