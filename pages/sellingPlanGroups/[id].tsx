@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
-import React, { ReactElement, useState } from 'react';
-import { Query, QueryResult } from 'react-apollo';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery } from 'react-apollo';
 import { useRouter } from 'next/router';
 import {
     Button,
@@ -66,6 +66,7 @@ const UPDATE_SELLING_PLAN_GROUP = gql`
 
 type SellingPlanGroupsResult = {
     sellingPlanGroup: {
+        id: string;
         description: string;
         products: {
             edges: {
@@ -110,58 +111,94 @@ const Products = ({
     );
 };
 
-const Test = (): ReactElement => {
+const SellingPlan = (): ReactElement => {
     const router = useRouter();
+
     const gid = idToGid(router.query.id as string, 'SellingPlanGroup');
+    const { loading, error, data } = useQuery<SellingPlanGroupsResult>(
+        GET_SELLING_PLAN_GROUP,
+        {
+            variables: { id: gid },
+        },
+    );
+
     const [description, setDescription] = useState('');
+    const [updateTodo] = useMutation(UPDATE_SELLING_PLAN_GROUP);
+
+    const handleChange = useCallback(
+        (newValue) => setDescription(newValue),
+        [],
+    );
+
+    useEffect(() => {
+        if (data?.sellingPlanGroup.description) {
+            setDescription(data.sellingPlanGroup.description);
+        }
+    }, [data]);
+
+    if (loading) return <h4>Loading...</h4>;
+    if (error) return <h4>Error...</h4>;
+    if (!data) return <h4>Product {gid} not found</h4>;
+
+    console.log('loading, error, data');
+    console.log(loading, error, data);
+
     // const updateSellingPlanGroup = useMutation(UPDATE_SELLING_PLAN_GROUP, {
     //     fetchPolicy: 'network-only',
     // });
 
+    // return (
+    //     <Query query={GET_SELLING_PLAN_GROUP} variables={{ id: gid }}>
+    //         {({
+    //             loading,
+    //             error,
+    //             data,
+    //         }: QueryResult<SellingPlanGroupsResult>) => {
+    //             console.log('loading, error, data');
+    //             console.log(loading, error, data);
+    //
+    //             if (loading) return <h4>Loading...</h4>;
+    //             if (error) return <h4>Error...</h4>;
+    //             if (!data) return <h4>Product {gid} not found</h4>;
+    //
+    //             setDescription(data.sellingPlanGroup.description);
+
     return (
-        <Query query={GET_SELLING_PLAN_GROUP} variables={{ id: gid }}>
-            {({
-                loading,
-                error,
-                data,
-            }: QueryResult<SellingPlanGroupsResult>) => {
-                console.log('loading, error, data');
-                console.log(loading, error, data);
-
-                if (loading) return <h4>Loading...</h4>;
-                if (error) return <h4>Error...</h4>;
-                if (!data) return <h4>Product {gid} not found</h4>;
-
-                setDescription(data.sellingPlanGroup.description);
-
-                return (
-                    <>
-                        Products
-                        <Products
-                            products={data.sellingPlanGroup.products.edges.map(
-                                (edge) => edge.node,
-                            )}
-                        />
-                        TODO ProductVariants
-                        <TextField
-                            label="Description"
-                            value={description}
-                            onChange={setDescription}
-                        />
-                        <Button
-                            onClick={async () => {
-                                // await updateSellingPlanGroup({
-                                //     variables: { description },
-                                // });
-                            }}
-                        >
-                            Save
-                        </Button>
-                    </>
-                );
-            }}
-        </Query>
+        <>
+            Products
+            <Products
+                products={data.sellingPlanGroup.products.edges.map(
+                    (edge) => edge.node,
+                )}
+            />
+            TODO ProductVariants
+            <TextField
+                label="Description"
+                value={description}
+                onChange={handleChange}
+            />
+            <Button
+                onClick={async () => {
+                    await updateTodo({
+                        variables: {
+                            input: {
+                                description,
+                            },
+                            id: data.sellingPlanGroup.id,
+                        },
+                    });
+                    // await updateSellingPlanGroup({
+                    //     variables: { description },
+                    // });
+                }}
+            >
+                Save
+            </Button>
+        </>
     );
+    // }}
+    //     </Query>
+    // );
 };
 
-export default Test;
+export default SellingPlan;
