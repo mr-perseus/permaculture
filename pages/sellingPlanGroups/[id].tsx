@@ -1,8 +1,15 @@
 import gql from 'graphql-tag';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { Query, QueryResult } from 'react-apollo';
 import { useRouter } from 'next/router';
-import { Card, ResourceItem, ResourceList, TextStyle } from '@shopify/polaris';
+import {
+    Button,
+    Card,
+    ResourceItem,
+    ResourceList,
+    TextField,
+    TextStyle,
+} from '@shopify/polaris';
 import { gidToId, idToGid } from '../../lib/utils';
 
 const GET_SELLING_PLAN_GROUP = gql`
@@ -11,6 +18,15 @@ const GET_SELLING_PLAN_GROUP = gql`
             id
             name
             createdAt
+            appId
+            createdAt
+            description
+            merchantCode
+            options
+            position
+            productCount
+            productVariantCount
+            summary
             products(first: 100) {
                 edges {
                     node {
@@ -31,8 +47,26 @@ const GET_SELLING_PLAN_GROUP = gql`
     }
 `;
 
+const UPDATE_SELLING_PLAN_GROUP = gql`
+    mutation sellingPlanGroupUpdate($id: ID!, $input: SellingPlanGroupInput!) {
+        sellingPlanGroupUpdate(id: $id, input: $input) {
+            deletedSellingPlanIds
+            sellingPlanGroup {
+                id
+                name
+            }
+            userErrors {
+                code
+                field
+                message
+            }
+        }
+    }
+`;
+
 type SellingPlanGroupsResult = {
     sellingPlanGroup: {
+        description: string;
         products: {
             edges: {
                 node: ProductResult;
@@ -79,6 +113,10 @@ const Products = ({
 const Test = (): ReactElement => {
     const router = useRouter();
     const gid = idToGid(router.query.id as string, 'SellingPlanGroup');
+    const [description, setDescription] = useState('');
+    // const updateSellingPlanGroup = useMutation(UPDATE_SELLING_PLAN_GROUP, {
+    //     fetchPolicy: 'network-only',
+    // });
 
     return (
         <Query query={GET_SELLING_PLAN_GROUP} variables={{ id: gid }}>
@@ -94,6 +132,8 @@ const Test = (): ReactElement => {
                 if (error) return <h4>Error...</h4>;
                 if (!data) return <h4>Product {gid} not found</h4>;
 
+                setDescription(data.sellingPlanGroup.description);
+
                 return (
                     <>
                         Products
@@ -102,7 +142,21 @@ const Test = (): ReactElement => {
                                 (edge) => edge.node,
                             )}
                         />
-                        Product Variants TODO
+                        TODO ProductVariants
+                        <TextField
+                            label="Description"
+                            value={description}
+                            onChange={setDescription}
+                        />
+                        <Button
+                            onClick={async () => {
+                                // await updateSellingPlanGroup({
+                                //     variables: { description },
+                                // });
+                            }}
+                        >
+                            Save
+                        </Button>
                     </>
                 );
             }}
