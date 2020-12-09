@@ -3,7 +3,6 @@ import { gql } from 'apollo-boost';
 import { Query, QueryResult } from 'react-apollo';
 import { useRouter } from 'next/router';
 import {
-    Button,
     Card,
     EmptyState,
     ResourceItem,
@@ -40,32 +39,6 @@ type SellingPlanGroup = {
     name: string;
 };
 
-// const GET_SUBSCRIPTIONS = gql`
-//     query {
-//         products(first: 10) {
-//             edges {
-//                 node {
-//                     id
-//                     title
-//                 }
-//             }
-//         }
-//     }
-// `;
-//
-// type ProductsResult = {
-//     products: {
-//         edges: {
-//             node: ProductResult;
-//         }[];
-//     };
-// };
-//
-// type ProductResult = {
-//     id: string;
-//     title: string;
-// };
-
 const Subscriptions = ({
     sellingPlanGroups,
 }: {
@@ -77,13 +50,13 @@ const Subscriptions = ({
         <>
             {sellingPlanGroups.length !== 0 ? (
                 <>
-                    <Button
-                        onClick={async () => {
-                            await router.push('/sellingPlanGroups/new');
-                        }}
-                    >
-                        Create Subscription
-                    </Button>
+                    {/* <Button */}
+                    {/*    onClick={async () => { */}
+                    {/*        await router.push('/sellingPlanGroups/new'); */}
+                    {/*    }} */}
+                    {/* > */}
+                    {/*    Create Subscription */}
+                    {/* </Button> */}
                     <Card>
                         <ResourceList
                             items={sellingPlanGroups}
@@ -132,28 +105,8 @@ const Subscriptions = ({
 const IndexPage = (): React.ReactElement => {
     return (
         <>
-            {/* <div>Products</div> */}
-            {/* <Query query={GET_SUBSCRIPTIONS}> */}
-            {/*    {({ loading, error, data }: QueryResult<ProductsResult>) => { */}
-            {/*        if (loading) return <div>Loading...</div>; */}
-            {/*        if (error) return <div>Error...</div>; */}
-            {/*        if (!data?.products?.edges) */}
-            {/*            return <div>Failed loading subscriptions</div>; */}
-            {/*        return ( */}
-            {/*            <Subscriptions */}
-            {/*                products={data.products.edges.map( */}
-            {/*                    (edge) => edge.node, */}
-            {/*                )} */}
-            {/*            /> */}
-            {/*        ); */}
-            {/*    }} */}
-            {/* </Query> */}
-            {/* <div>Selling plans</div> */}
             <Query query={GET_SELLING_PLAN_GROUPS}>
                 {({ loading, error, data }: QueryResult<SellingPlanGroups>) => {
-                    console.log('loading, error, data');
-                    console.log(loading, error, data);
-
                     if (loading) return <div>Loading...</div>;
                     if (error) return <div>Error...</div>;
                     if (!data?.sellingPlanGroups?.edges)

@@ -1,5 +1,5 @@
 import gql from 'graphql-tag';
-import React, { ReactElement, useCallback, useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-apollo';
 import { useRouter } from 'next/router';
 import {
@@ -95,7 +95,9 @@ const Products = ({
                     return (
                         <ResourceItem
                             id={id}
-                            url={`/subscriptions/${id}`}
+                            onClick={() => {
+                                // TODO link to product
+                            }}
                             accessibilityLabel={`View details for ${product.title}`}
                         >
                             <h3>
@@ -123,12 +125,7 @@ const SellingPlan = (): ReactElement => {
     );
 
     const [description, setDescription] = useState('');
-    const [updateTodo] = useMutation(UPDATE_SELLING_PLAN_GROUP);
-
-    const handleChange = useCallback(
-        (newValue) => setDescription(newValue),
-        [],
-    );
+    const [updateSellingPlan] = useMutation(UPDATE_SELLING_PLAN_GROUP);
 
     useEffect(() => {
         if (data?.sellingPlanGroup.description) {
@@ -140,29 +137,6 @@ const SellingPlan = (): ReactElement => {
     if (error) return <h4>Error...</h4>;
     if (!data) return <h4>Product {gid} not found</h4>;
 
-    console.log('loading, error, data');
-    console.log(loading, error, data);
-
-    // const updateSellingPlanGroup = useMutation(UPDATE_SELLING_PLAN_GROUP, {
-    //     fetchPolicy: 'network-only',
-    // });
-
-    // return (
-    //     <Query query={GET_SELLING_PLAN_GROUP} variables={{ id: gid }}>
-    //         {({
-    //             loading,
-    //             error,
-    //             data,
-    //         }: QueryResult<SellingPlanGroupsResult>) => {
-    //             console.log('loading, error, data');
-    //             console.log(loading, error, data);
-    //
-    //             if (loading) return <h4>Loading...</h4>;
-    //             if (error) return <h4>Error...</h4>;
-    //             if (!data) return <h4>Product {gid} not found</h4>;
-    //
-    //             setDescription(data.sellingPlanGroup.description);
-
     return (
         <>
             Products
@@ -171,15 +145,14 @@ const SellingPlan = (): ReactElement => {
                     (edge) => edge.node,
                 )}
             />
-            TODO ProductVariants
             <TextField
                 label="Description"
                 value={description}
-                onChange={handleChange}
+                onChange={(newValue) => setDescription(newValue)}
             />
             <Button
                 onClick={async () => {
-                    await updateTodo({
+                    await updateSellingPlan({
                         variables: {
                             input: {
                                 description,
@@ -187,18 +160,12 @@ const SellingPlan = (): ReactElement => {
                             id: data.sellingPlanGroup.id,
                         },
                     });
-                    // await updateSellingPlanGroup({
-                    //     variables: { description },
-                    // });
                 }}
             >
                 Save
             </Button>
         </>
     );
-    // }}
-    //     </Query>
-    // );
 };
 
 export default SellingPlan;
