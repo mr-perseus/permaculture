@@ -8,6 +8,7 @@ import {
     ResourceItem,
     ResourceList,
     TextStyle,
+    Button,
 } from '@shopify/polaris';
 import { gidToId } from '../lib/utils';
 
@@ -50,13 +51,13 @@ const Subscriptions = ({
         <>
             {sellingPlanGroups.length !== 0 ? (
                 <>
-                    {/* <Button */}
-                    {/*    onClick={async () => { */}
-                    {/*        await router.push('/sellingPlanGroups/new'); */}
-                    {/*    }} */}
-                    {/* > */}
-                    {/*    Create Subscription */}
-                    {/* </Button> */}
+                    <Button
+                        onClick={async () => {
+                            await router.push('/sellingPlanGroups/create');
+                        }}
+                    >
+                        Create Subscription
+                    </Button>
                     <Card>
                         <ResourceList
                             items={sellingPlanGroups}

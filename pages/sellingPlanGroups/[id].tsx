@@ -68,6 +68,7 @@ type SellingPlanGroupsResult = {
     sellingPlanGroup: {
         id: string;
         description: string;
+        name: string;
         products: {
             edges: {
                 node: ProductResult;
@@ -113,7 +114,7 @@ const Products = ({
     );
 };
 
-const SellingPlan = (): ReactElement => {
+const SellingPlanGroup = (): ReactElement => {
     const router = useRouter();
 
     const gid = idToGid(router.query.id as string, 'SellingPlanGroup');
@@ -125,11 +126,13 @@ const SellingPlan = (): ReactElement => {
     );
 
     const [description, setDescription] = useState('');
-    const [updateSellingPlan] = useMutation(UPDATE_SELLING_PLAN_GROUP);
+    const [name, setName] = useState('');
+    const [updateSellingPlanGroup] = useMutation(UPDATE_SELLING_PLAN_GROUP);
 
     useEffect(() => {
-        if (data?.sellingPlanGroup.description) {
+        if (data) {
             setDescription(data.sellingPlanGroup.description);
+            setName(data.sellingPlanGroup.name);
         }
     }, [data]);
 
@@ -146,20 +149,27 @@ const SellingPlan = (): ReactElement => {
                 )}
             />
             <TextField
+                label="Name"
+                value={name}
+                onChange={(newValue) => setName(newValue)}
+            />
+            <TextField
                 label="Description"
                 value={description}
                 onChange={(newValue) => setDescription(newValue)}
             />
             <Button
                 onClick={async () => {
-                    await updateSellingPlan({
+                    await updateSellingPlanGroup({
                         variables: {
                             input: {
+                                name,
                                 description,
                             },
                             id: data.sellingPlanGroup.id,
                         },
                     });
+                    await router.push('/index');
                 }}
             >
                 Save
@@ -168,4 +178,4 @@ const SellingPlan = (): ReactElement => {
     );
 };
 
-export default SellingPlan;
+export default SellingPlanGroup;
