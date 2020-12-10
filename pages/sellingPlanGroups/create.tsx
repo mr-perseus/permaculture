@@ -1,8 +1,7 @@
 import gql from 'graphql-tag';
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement } from 'react';
 import { useMutation } from 'react-apollo';
-import { useRouter } from 'next/router';
-import { Button, TextField } from '@shopify/polaris';
+import SellingPlanGroup from '../../components/SellingPlanGroup';
 
 const CREATE_SELLING_PLAN = gql`
     mutation($input: SellingPlanGroupInput!) {
@@ -46,84 +45,57 @@ type ProductResult = {
     title: string;
 };
 
-const SellingPlanGroup = (): ReactElement => {
-    const router = useRouter();
-
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
+const CreateSellingPlanGroup = (): ReactElement => {
     const [createSellingPlanGroup] = useMutation<
         SellingPlanGroupCreateResult,
         { input: SellingPlanGroupCreate }
     >(CREATE_SELLING_PLAN);
 
     return (
-        <>
-            <TextField
-                label="Name"
-                value={name}
-                onChange={(newValue) => setName(newValue)}
-            />
-            <TextField
-                label="Description"
-                value={description}
-                onChange={(newValue) => setDescription(newValue)}
-            />
-            <Button
-                onClick={async () => {
-                    const createResult = await createSellingPlanGroup({
-                        variables: {
-                            input: {
-                                description,
-                                name,
-                                // TODO remove this hardcoded stuff and add it to form
-                                options: ['Delivery every'],
-                                sellingPlansToCreate: [
-                                    {
-                                        name: 'Delivered every week',
-                                        options: '1 Week(s)',
-                                        position: 1,
-                                        billingPolicy: {
-                                            recurring: {
-                                                interval: 'WEEK',
-                                                intervalCount: 1,
-                                            },
+        <SellingPlanGroup
+            modifySellingPlanGroup={async (description, name) => {
+                return createSellingPlanGroup({
+                    variables: {
+                        input: {
+                            description,
+                            name,
+                            // TODO remove this hardcoded stuff and add it to form
+                            options: ['Delivery every'],
+                            sellingPlansToCreate: [
+                                {
+                                    name: 'Delivered every week',
+                                    options: '1 Week(s)',
+                                    position: 1,
+                                    billingPolicy: {
+                                        recurring: {
+                                            interval: 'WEEK',
+                                            intervalCount: 1,
                                         },
-                                        deliveryPolicy: {
-                                            recurring: {
-                                                interval: 'WEEK',
-                                                intervalCount: 1,
-                                            },
+                                    },
+                                    deliveryPolicy: {
+                                        recurring: {
+                                            interval: 'WEEK',
+                                            intervalCount: 1,
                                         },
-                                        pricingPolicies: [
-                                            {
-                                                fixed: {
-                                                    adjustmentType:
-                                                        'PERCENTAGE',
-                                                    adjustmentValue: {
-                                                        percentage: 15.0,
-                                                    },
+                                    },
+                                    pricingPolicies: [
+                                        {
+                                            fixed: {
+                                                adjustmentType: 'PERCENTAGE',
+                                                adjustmentValue: {
+                                                    percentage: 15.0,
                                                 },
                                             },
-                                        ],
-                                    },
-                                ],
-                            },
+                                        },
+                                    ],
+                                },
+                            ],
                         },
-                    });
-                    if (createResult.data?.sellingPlanGroupCreate.userErrors) {
-                        // TODO Error handling
-                        console.log(
-                            createResult.data?.sellingPlanGroupCreate
-                                .userErrors,
-                        );
-                    }
-                    await router.push('/index');
-                }}
-            >
-                Save
-            </Button>
-        </>
+                    },
+                });
+            }}
+        />
     );
 };
 
-export default SellingPlanGroup;
+export default CreateSellingPlanGroup;

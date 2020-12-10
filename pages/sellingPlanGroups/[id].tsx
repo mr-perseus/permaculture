@@ -1,16 +1,11 @@
 import gql from 'graphql-tag';
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, { ReactElement } from 'react';
 import { useMutation, useQuery } from 'react-apollo';
 import { useRouter } from 'next/router';
-import {
-    Button,
-    Card,
-    ResourceItem,
-    ResourceList,
-    TextField,
-    TextStyle,
-} from '@shopify/polaris';
-import { gidToId, idToGid } from '../../lib/utils';
+import { idToGid } from '../../lib/utils';
+import SellingPlanGroup, {
+    ProductResult,
+} from '../../components/SellingPlanGroup';
 
 const GET_SELLING_PLAN_GROUP = gql`
     query getSellingPlanGroup($id: ID!) {
@@ -77,44 +72,7 @@ type SellingPlanGroupsResult = {
     };
 };
 
-type ProductResult = {
-    id: string;
-    title: string;
-};
-
-const Products = ({
-    products,
-}: {
-    products: ProductResult[];
-}): React.ReactElement => {
-    return (
-        <Card>
-            <ResourceList
-                items={products}
-                renderItem={(product: ProductResult) => {
-                    const id = gidToId(product.id);
-                    return (
-                        <ResourceItem
-                            id={id}
-                            onClick={() => {
-                                // TODO link to product
-                            }}
-                            accessibilityLabel={`View details for ${product.title}`}
-                        >
-                            <h3>
-                                <TextStyle variation="strong">
-                                    {product.title}
-                                </TextStyle>
-                            </h3>
-                        </ResourceItem>
-                    );
-                }}
-            />
-        </Card>
-    );
-};
-
-const SellingPlanGroup = (): ReactElement => {
+const UpdateSellingPlanGroup = (): ReactElement => {
     const router = useRouter();
 
     const gid = idToGid(router.query.id as string, 'SellingPlanGroup');
@@ -125,57 +83,32 @@ const SellingPlanGroup = (): ReactElement => {
         },
     );
 
-    const [description, setDescription] = useState('');
-    const [name, setName] = useState('');
     const [updateSellingPlanGroup] = useMutation(UPDATE_SELLING_PLAN_GROUP);
-
-    useEffect(() => {
-        if (data) {
-            setDescription(data.sellingPlanGroup.description);
-            setName(data.sellingPlanGroup.name);
-        }
-    }, [data]);
 
     if (loading) return <h4>Loading...</h4>;
     if (error) return <h4>Error...</h4>;
     if (!data) return <h4>Product {gid} not found</h4>;
 
     return (
-        <>
-            Products
-            <Products
-                products={data.sellingPlanGroup.products.edges.map(
-                    (edge) => edge.node,
-                )}
-            />
-            <TextField
-                label="Name"
-                value={name}
-                onChange={(newValue) => setName(newValue)}
-            />
-            <TextField
-                label="Description"
-                value={description}
-                onChange={(newValue) => setDescription(newValue)}
-            />
-            <Button
-                onClick={async () => {
-                    await updateSellingPlanGroup({
-                        variables: {
-                            input: {
-                                name,
-                                description,
-                            },
-                            id: data.sellingPlanGroup.id,
+        <SellingPlanGroup
+            modifySellingPlanGroup={async (description, name) => {
+                return updateSellingPlanGroup({
+                    variables: {
+                        input: {
+                            name,
+                            description,
                         },
-                    });
-                    await router.push('/index');
-                }}
-            >
-                Save
-            </Button>
-        </>
+                        id: data.sellingPlanGroup.id,
+                    },
+                });
+            }}
+            products={data.sellingPlanGroup.products.edges.map(
+                (edge) => edge.node,
+            )}
+            defaultDescription={data.sellingPlanGroup.description}
+            defaultName={data.sellingPlanGroup.name}
+        />
     );
 };
 
-export default SellingPlanGroup;
+export default UpdateSellingPlanGroup;
