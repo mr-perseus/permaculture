@@ -87,7 +87,7 @@ const UpdateSellingPlanGroup = (): ReactElement => {
 
     if (loading) return <h4>Loading...</h4>;
     if (error) return <h4>Error...</h4>;
-    if (!data) return <h4>Product {gid} not found</h4>;
+    if (!data) return <h4>Subscription {gid} not found</h4>;
 
     return (
         <SellingPlanGroup
