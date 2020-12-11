@@ -1,8 +1,8 @@
 import { gql } from 'apollo-boost';
-import { GraphQLError } from 'graphql';
 import {
     Checkbox,
-    Stack,
+    ResourceItem,
+    ResourceList,
     Text,
     useContainer,
     useData,
@@ -11,16 +11,33 @@ import {
     useToast,
 } from '@shopify/argo-admin-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { Add } from '@shopify/argo-admin/extension-api/data/product-subscription/data';
 import { translations, Translations } from './adminTranslations';
-import { getClient } from './adminUtils';
+import { getClient, showGraphQlErrors } from './adminUtils';
 
 const GET_SELLING_PLANS = gql`
-    query {
+    query sellingPlanGroups($productId: ID!) {
         sellingPlanGroups(first: 10) {
             edges {
                 node {
                     id
                     name
+                    appliesToProduct(productId: $productId)
+                }
+            }
+        }
+    }
+`;
+
+const GET_SELLING_PLANS_VARIANT = gql`
+    query sellingPlanGroups($productVariantId: ID!, $productId: ID!) {
+        sellingPlanGroups(first: 10) {
+            edges {
+                node {
+                    id
+                    name
+                    appliesToProductVariant(productVariantId: $productVariantId)
+                    appliesToProduct(productId: $productId)
                 }
             }
         }
@@ -34,6 +51,14 @@ interface SellingPlanQueryResult {
         }[];
     };
 }
+
+interface SellingPlan {
+    id: string;
+    name: string;
+    appliesToProduct: boolean;
+    appliesToProductVariant?: boolean;
+}
+
 const ADD_SELLING_PLAN = gql`
     mutation productJoinSellingPlanGroups(
         $id: ID!
@@ -76,25 +101,6 @@ const ADD_SELLING_PLAN_VARIANT = gql`
     }
 `;
 
-interface SellingPlan {
-    id: string;
-    name: string;
-}
-
-interface ShowGraphQlErrorsParams {
-    showToast: (message: string, { error }?: { error: boolean }) => void;
-    errors: readonly GraphQLError[];
-}
-
-const showGraphQlErrors = ({ showToast, errors }: ShowGraphQlErrorsParams) => {
-    showToast(
-        `Error in request: <br /> ${errors
-            .map((err) => err.message)
-            .join(' - ')} `,
-        { error: true },
-    );
-};
-
 async function addRemote(
     token: string | undefined,
     selectedPlans: string[],
@@ -120,6 +126,25 @@ async function addRemote(
     });
 }
 
+async function fetchPlans(sessionToken: string | undefined, data: Add) {
+    if (!data.variantId) {
+        return getClient(sessionToken).query<SellingPlanQueryResult>({
+            query: GET_SELLING_PLANS,
+            variables: {
+                productId: data.productId,
+            },
+        });
+    }
+
+    return getClient(sessionToken).query<SellingPlanQueryResult>({
+        query: GET_SELLING_PLANS_VARIANT,
+        variables: {
+            productVariantId: data.variantId,
+            productId: data.productId,
+        },
+    });
+}
+
 export default function AddSellingPlan(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Add'>();
 
@@ -141,16 +166,19 @@ export default function AddSellingPlan(): JSX.Element {
     const [availablePlans, setAvailablePlans] = useState<SellingPlan[]>([]);
 
     useEffect(() => {
-        const fetchPlans = async () => {
+        const getPlans = async () => {
             try {
                 const sessionToken = await getSessionToken();
-                const { data: sellingPlanData, errors } = await getClient(
+
+                const { data: sellingPlanData, errors } = await fetchPlans(
                     sessionToken,
-                ).query<SellingPlanQueryResult>({
-                    query: GET_SELLING_PLANS,
-                });
+                    data,
+                );
+
                 if (errors && errors.length > 0) {
-                    showGraphQlErrors({ showToast, errors });
+                    showToast(`Graphql error fetching plans`, {
+                        error: true,
+                    });
                 } else {
                     setAvailablePlans(
                         sellingPlanData.sellingPlanGroups.edges.map(
@@ -165,8 +193,8 @@ export default function AddSellingPlan(): JSX.Element {
             }
         };
         // eslint-disable-next-line no-void
-        void fetchPlans();
-    }, [getSessionToken, showToast]);
+        void getPlans();
+    }, [data, getSessionToken, showToast]);
 
     useEffect(() => {
         setPrimaryAction({
@@ -220,21 +248,37 @@ export default function AddSellingPlan(): JSX.Element {
                 existing plans
             </Text>
 
-            <Stack>
-                {availablePlans.map((plan) => (
-                    <Checkbox
-                        key={plan.id}
-                        label={plan.name}
-                        onChange={(checked) => {
-                            const plans = checked
-                                ? selectedPlans.concat(plan.id)
-                                : selectedPlans.filter((id) => id !== plan.id);
-                            setSelectedPlans(plans);
-                        }}
-                        checked={selectedPlans.includes(plan.id)}
-                    />
-                ))}
-            </Stack>
+            <ResourceList>
+                {availablePlans
+                    .filter(
+                        (plan) =>
+                            !plan.appliesToProduct &&
+                            !plan.appliesToProductVariant,
+                    )
+                    .map((plan) => (
+                        <ResourceItem
+                            onPress={() => {
+                                // nop
+                            }}
+                            id={plan.id}
+                            key={plan.id}
+                        >
+                            <Checkbox
+                                key={plan.id}
+                                label={plan.name}
+                                onChange={(checked) => {
+                                    const plans = checked
+                                        ? selectedPlans.concat(plan.id)
+                                        : selectedPlans.filter(
+                                              (id) => id !== plan.id,
+                                          );
+                                    setSelectedPlans(plans);
+                                }}
+                                checked={selectedPlans.includes(plan.id)}
+                            />
+                        </ResourceItem>
+                    ))}
+            </ResourceList>
         </>
     );
 }

@@ -1163,7 +1163,7 @@
   resolved "https://registry.yarnpkg.com/@sewing-kit/webpack-plugin-hash-output/-/webpack-plugin-hash-output-0.0.2.tgz#a41ddef000619ac20e64513edbbfc6f28afe7905"
   integrity sha512-BF3gmC9YZf4VY5RLAc5qUbxft16O614jnTtGr8gPRbJF4y3Qz3AVSxSB8dJDldzk4AH9lTQvH0e1Wkbgp5tR8g==
 
-"@shopify/argo-admin-cli@latest":
+"@shopify/argo-admin-cli@^0.1.14":
   version "0.1.14"
   resolved "https://registry.yarnpkg.com/@shopify/argo-admin-cli/-/argo-admin-cli-0.1.14.tgz#cb5df56b0bc02117b46d2802086f660902798d67"
   integrity sha512-k1hIffeTOw38IAg4h+8uSNLPNxlGumglflAzKya6jOJDMgXY+g/J2A1F7mKbGZ/AC1ijFpVXvKZZyc+UfELqZw==

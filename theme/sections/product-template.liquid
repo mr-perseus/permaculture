@@ -160,7 +160,12 @@
 
           {% form 'product', product, class:form_classes, novalidate: 'novalidate', data-product-form: '' %}
             <p><b>TEST111</b></p>
-            {% for group in product.selling_plan_groups %}
+
+              <p>somethign {{ all_products[product.handle].selling_plan_groups |  size }}</p>
+
+              <p>current title: {{  current_variant.title }}, selling plan group size: {{  current_variant.selling_plan_groups |  size }}</p>
+              <p>product title: {{  product.title }}, selling plan group size: {{  product.selling_plan_groups |  size }}</p>
+            {% for group in current_variant.selling_plan_groups %}
               <p>TEST33331</p>
               <fieldset>
                 <legend>{{ group.name}}</legend>
@@ -170,6 +175,7 @@
                 {% endfor %}
               </fieldset>
             {% endfor %}
+
             {% unless product.has_only_default_variant %}
               <div class="product-form__controls-group">
                 {% for option in product.options_with_values %}

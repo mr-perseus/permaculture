@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     Button,
     Card,
@@ -16,6 +16,7 @@ import { gql } from 'apollo-boost';
 import AddSellingPlan from './AddSellingPlan';
 import { getClient } from './adminUtils';
 import { Translations, translations } from './adminTranslations';
+import Remove from './RemoveSellingPlan';
 
 const TEST_CREATE_SELLING_PLAN = gql`
     mutation {
@@ -197,49 +198,6 @@ function Create() {
             </Card>
 
             {actions}
-        </>
-    );
-}
-
-// 'Remove' mode should remove the current product from a selling plan.
-// This should not delete the selling plan.
-// [Shopify admin renders this mode inside a modal container]
-function Remove() {
-    const data = useData<'Admin::Product::SubscriptionPlan::Remove'>();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done, setPrimaryAction, setSecondaryAction } = useContainer<
-        'Admin::Product::SubscriptionPlan::Remove'
-    >();
-    const locale = useLocale();
-    const localizedStrings: Translations = useMemo(() => {
-        // eslint-disable-next-line security/detect-object-injection
-        return translations[locale] || translations.en;
-    }, [locale]);
-
-    const { getSessionToken } = useSessionToken();
-
-    useEffect(() => {
-        setPrimaryAction({
-            content: 'Remove from plan',
-            onAction: () => {
-                // todo remove plan
-                done();
-            },
-        });
-
-        setSecondaryAction({
-            content: 'Cancel',
-            onAction: () => close(),
-        });
-    }, [getSessionToken, done, close, setPrimaryAction, setSecondaryAction]);
-
-    return (
-        <>
-            <Text size="titleLarge">{localizedStrings.hello}!</Text>
-            <Text>
-                Remove {`{Product id ${data.productId}}`} from{' '}
-                {`{Plan group id ${data.sellingPlanGroupId}}`}
-            </Text>
         </>
     );
 }
