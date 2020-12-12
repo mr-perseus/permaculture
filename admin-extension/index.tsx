@@ -15,7 +15,6 @@ import {
     useToast,
 } from '@shopify/argo-admin-react';
 import ApolloClient, { gql } from 'apollo-boost';
-import { GraphQLError } from 'graphql';
 
 const getClient = (sessionToken?: string) => {
     return new ApolloClient({
@@ -106,7 +105,7 @@ const translations: {
 
 interface ShowGraphQlErrorsParams {
     showToast: (message: string, { error }?: { error: boolean }) => void;
-    errors: readonly GraphQLError[];
+    errors: readonly { message: string }[];
 }
 
 const showGraphQlErrors = ({ showToast, errors }: ShowGraphQlErrorsParams) => {

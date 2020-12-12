@@ -69,6 +69,7 @@ function EditSellingPlan({
             payload: {
                 ...plan,
                 deliveryPolicy: {
+                    ...plan.deliveryPolicy,
                     interval: newVal,
                 },
             },
