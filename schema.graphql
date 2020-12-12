@@ -164,6 +164,30 @@ interface HasLocalizationExtensions {
     ): LocalizationExtensionConnection!
 }
 
+"""
+
+Localization extensions associated with the specified resource. For example, the tax id for government invoice.
+"""
+interface HasLocalizationExtensionsForDraftOrders {
+    "List of localization extensions for the resource."
+    localizationExtensions(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "The country codes of the extensions."
+        countryCodes: [CountryCode!],
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "The purpose of the extensions."
+        purposes: [LocalizationExtensionPurpose!],
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): LocalizationExtensionConnection!
+}
+
 "Represents information about the metafields associated to the specified resource."
 interface HasMetafields {
     "The metafield associated with the resource."
@@ -2719,6 +2743,8 @@ type DeliveryCountry implements Node {
     name: String!
     "The regions associated with this country."
     provinces: [DeliveryProvince!]!
+    "The name of the country, translated based on the user locale."
+    translatedName: String!
 }
 
 "A country with the name of the zone."
@@ -3048,6 +3074,8 @@ type DeliveryProvince implements Node {
     id: ID!
     "The name of the region."
     name: String!
+    "The name of the region, translated based on the user locale."
+    translatedName: String!
 }
 
 "The merchant-defined rate of the DeliveryMethodDefinition."
@@ -3954,7 +3982,7 @@ type DraftFulfillment {
 
 Represents a draft order. Merchants can use draft orders to create orders on behalf of their customers.
 """
-type DraftOrder implements CommentEventSubject & HasEvents & HasMetafields & LegacyInteroperability & Node {
+type DraftOrder implements CommentEventSubject & HasEvents & HasLocalizationExtensionsForDraftOrders & HasMetafields & LegacyInteroperability & Node {
     "Order-level discount applied to the draft order."
     appliedDiscount: DraftOrderAppliedDiscount
     """
@@ -4034,6 +4062,23 @@ type DraftOrder implements CommentEventSubject & HasEvents & HasMetafields & Leg
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): DraftOrderLineItemConnection!
+    "List of localization extensions for the resource."
+    localizationExtensions(
+        "Returns the elements that come after the specified cursor."
+        after: String,
+        "Returns the elements that come before the specified cursor."
+        before: String,
+        "The country codes of the extensions."
+        countryCodes: [CountryCode!],
+        "Returns up to the first `n` elements from the list."
+        first: Int,
+        "Returns up to the last `n` elements from the list."
+        last: Int,
+        "The purpose of the extensions."
+        purposes: [LocalizationExtensionPurpose!],
+        "Reverse the order of the underlying list."
+        reverse: Boolean = false
+    ): LocalizationExtensionConnection!
     "The metafield associated with the resource."
     metafield(
         "Identifier for the metafield (maximum of 30 characters)."
@@ -5096,6 +5141,8 @@ type FulfillmentTrackingInfoUpdateV2Payload {
 type Image implements HasMetafields {
     "A word or phrase to share the nature or contents of an image."
     altText: String
+    "The original height of the image in pixels. Returns `null` if the image is not hosted by Shopify."
+    height: Int
     "A unique identifier for the image."
     id: ID
     "The metafield associated with the resource."
@@ -5170,6 +5217,8 @@ type Image implements HasMetafields {
         "Image size multiplier for high-resolution retina displays. Must be between 1 and 3."
         scale: Int = 1
     ): URL!
+    "The original width of the image in pixels. Returns `null` if the image is not hosted by Shopify."
+    width: Int
 }
 
 type ImageConnection {
@@ -5679,6 +5728,8 @@ type Locale {
 type LocalizationExtension {
     "Country ISO 3166-1 alpha-2 code."
     countryCode: CountryCode!
+    "The localized extension keys that are allowed."
+    key: LocalizationExtensionKey!
     "The purpose of this localization extension."
     purpose: LocalizationExtensionPurpose!
     "The localized extension title."
@@ -6355,7 +6406,7 @@ type Model3d implements Media & Node {
     "Any errors which have occurred on the media."
     mediaErrors: [MediaError!]!
     "The original source for a 3d model."
-    originalSource: Model3dSource!
+    originalSource: Model3dSource
     "The preview image for the media."
     preview: MediaPreviewImage
     "The sources for a 3d model."
@@ -7262,11 +7313,6 @@ type Mutation {
         "The input for the mutation."
         input: OrderInput!
     ): OrderUpdatePayload
-    "Extends an open payment session."
-    paymentSessionExtend(
-        "The payment session ID."
-        id: ID!
-    ): PaymentSessionExtendPayload
     "Rejects an open payment session."
     paymentSessionReject(
         "The payment session ID."
@@ -8467,7 +8513,9 @@ type Order implements CommentEventSubject & HasEvents & HasLocalizationExtension
     "Total of all taxes applied to the order in shop and presentment currencies."
     totalTaxSet: MoneyBag
     "Total tip amount received for the order."
-    totalTipReceived: MoneyV2!
+    totalTipReceived: MoneyV2! @deprecated(reason : "Use `totalTipReceivedSet` instead")
+    "Total tip received for the order in shop and presentment currencies."
+    totalTipReceivedSet: MoneyBag!
     "Total weight (grams) of the order."
     totalWeight: UnsignedInt64
     "List of all transactions associated with the order."
@@ -8870,14 +8918,6 @@ type PaymentSession {
     redirectUrl: URL!
     "The payment status."
     status: PaymentSessionStatus!
-}
-
-"Return type for `paymentSessionExtend` mutation."
-type PaymentSessionExtendPayload {
-    "The updated payment session."
-    paymentSession: PaymentSession
-    "List of errors that occurred executing the mutation."
-    userErrors: [UserError!]!
 }
 
 "Return type for `paymentSessionReject` mutation."
@@ -9616,7 +9656,7 @@ type Product implements HasMetafields & HasPublishedTranslations & LegacyInterop
     A value of `null` indicates that the product is not published to the Online Store sales channel.
     """
     onlineStoreUrl: URL
-    "A list of custom product options (maximum of 3 per product)."
+    "A list of product options. The limit is specified by Shop.resourceLimits.maxProductOptions."
     options(
         "Truncate the array result to this size."
         first: Int
@@ -9968,9 +10008,8 @@ type ProductLeaveSellingPlanGroupsPayload {
 
 """
 
-Custom product property names like "Size", "Color", and "Material".
-Products are based on permutations of these options.
-A product may have a maximum of 3 options.
+Product property names like "Size", "Color", and "Material".
+Variants are selected based on permutations of these options.
 255 characters limit each.
 """
 type ProductOption implements HasPublishedTranslations & Node {
@@ -11502,7 +11541,7 @@ type QueryRoot {
         "The ID of the ScriptTag to return."
         id: ID!
     ): ScriptTag
-    "A comma separated list of script tags."
+    "A list of script tags."
     scriptTags(
         "Returns the elements that come after the specified cursor."
         after: String,
@@ -11519,7 +11558,7 @@ type QueryRoot {
     ): ScriptTagConnection!
     "Returns a Selling Plan Group resource by ID."
     sellingPlanGroup(
-        "The ID of the SellingPlanGroup to return."
+        "The ID of the EditSellingPlanGroup to return."
         id: ID!
     ): SellingPlanGroup
     "List Selling Plan Groups."
@@ -12098,8 +12137,8 @@ type SearchResultEdge {
 
 """
 
-Custom properties that a shop owner can use to define product variants.
-Multiple options can exist. Options are represented as: option1, option2, option3, etc.
+Properties used by customers to select a product variant.
+Products can have multiple options, like different sizes or colors.
 """
 type SelectedOption {
     "The product option’s name."
@@ -12385,8 +12424,9 @@ type SellingPlanRecurringDeliveryPolicy {
     """
 
     Specifies if the delivery policy is merchant or buyer-centric.
-    If it is buyer-centric it states the time at which the buyer will receive the goods.
-    If it is merchant-centric it states the time at which the fulfillment should be started.
+    Buyer-centric delivery policies state the time when the buyer will receive the goods.
+    Merchant-centric delivery policies state the time when the fulfillment should be started.
+    Currently, only merchant-centric delivery policies are supported.
     """
     intent: SellingPlanRecurringDeliveryPolicyIntent!
     "The delivery frequency, it can be either: day, week, month or year."
@@ -12693,7 +12733,7 @@ type Shop implements HasMetafields & HasPublishedTranslations & Node {
         "Sort the underlying list by the given key."
         sortKey: CustomerSavedSearchSortKeys = ID
     ): SavedSearchConnection! @deprecated(reason : "Use `QueryRoot.customerSavedSearches` instead.")
-    "A comma separated list of tags that have been added to customer accounts."
+    "A list of tags that have been added to customer accounts."
     customerTags(
         "Returns up to the first `n` elements from the list."
         first: Int!
@@ -12749,7 +12789,7 @@ type Shop implements HasMetafields & HasPublishedTranslations & Node {
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): SavedSearchConnection! @deprecated(reason : "Use `QueryRoot.draftOrderSavedSearches` instead.")
-    "A comma separated list of tags that have been added to draft orders."
+    "A list of tags that have been added to draft orders."
     draftOrderTags(
         "Returns up to the first `n` elements from the list."
         first: Int!
@@ -12963,7 +13003,7 @@ type Shop implements HasMetafields & HasPublishedTranslations & Node {
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): SavedSearchConnection! @deprecated(reason : "Use `QueryRoot.orderSavedSearches` instead.")
-    "A comma separated list of tags that have been added to orders."
+    "A list of tags that have been added to orders."
     orderTags(
         "Returns up to the first `n` elements from the list."
         first: Int!,
@@ -13140,7 +13180,7 @@ type Shop implements HasMetafields & HasPublishedTranslations & Node {
         "Reverse the order of the underlying list."
         reverse: Boolean = false
     ): SavedSearchConnection! @deprecated(reason : "Use `QueryRoot.productSavedSearches` instead.")
-    "A comma separated list of tags that have been added to products."
+    "A list of tags that have been added to products."
     productTags(
         "Returns up to the first `n` elements from the list."
         first: Int!
@@ -14043,6 +14083,8 @@ type SubscriptionBillingAttempt implements Node {
     completedAt: DateTime
     "The date and time when the billing attempt was created."
     createdAt: DateTime!
+    "A code corresponding to a payment error during processing."
+    errorCode: SubscriptionBillingAttemptErrorCode
     "A message describing a payment error during processing."
     errorMessage: String
     "Globally unique identifier."
@@ -16980,6 +17022,22 @@ enum KitSkillLocale {
     EN
 }
 
+"The key of a localization extension."
+enum LocalizationExtensionKey {
+    "Extension key 'shipping_credential_br' for country BR."
+    SHIPPING_CREDENTIAL_BR
+    "Extension key 'shipping_credential_cn' for country CN."
+    SHIPPING_CREDENTIAL_CN
+    "Extension key 'shipping_credential_kr' for country KR."
+    SHIPPING_CREDENTIAL_KR
+    "Extension key 'tax_credential_br' for country BR."
+    TAX_CREDENTIAL_BR
+    "Extension key 'tax_credential_it' for country IT."
+    TAX_CREDENTIAL_IT
+    "Extension key 'tax_email_it' for country IT."
+    TAX_EMAIL_IT
+}
+
 "The purpose of a localization extension."
 enum LocalizationExtensionPurpose {
     "Extensions that are used for shipping purposes, for example, customs clearance."
@@ -17553,8 +17611,6 @@ enum PaymentMethods {
 
 "Payment status codes."
 enum PaymentSessionStatusCode {
-    "Payment extended."
-    EXTENDED
     "Payment rejected."
     REJECTED
     "Payment resolved."
@@ -17915,7 +17971,6 @@ enum ProductVariantSortKeys {
 
 "The set of valid sort keys for the ProfileItem query."
 enum ProfileItemSortKeys {
-    "Sort by the `created_at` value."
     CREATED_AT
     "Sort by the `id` value."
     ID
@@ -18021,7 +18076,7 @@ enum SellingPlanAnchorType {
     YEARDAY
 }
 
-"The set of valid sort keys for the SellingPlanGroup query."
+"The set of valid sort keys for the EditSellingPlanGroup query."
 enum SellingPlanGroupSortKeys {
     "Sort by the `created_at` value."
     CREATED_AT
@@ -18142,12 +18197,7 @@ enum SellingPlanPricingPolicyAdjustmentType {
 enum SellingPlanRecurringDeliveryPolicyIntent {
     """
 
-    Buyer centric. Mark this delivery policy to define when the buyer should receive the goods.
-    """
-    DELIVERY
-    """
-
-    Merchant centric. Mark this delivery policy to define when the merchant should start fulfillment.
+    A merchant-centric delivery policy. Mark this delivery policy to define when the merchant should start fulfillment.
     """
     FULFILLMENT_BEGIN
 }
@@ -18358,6 +18408,54 @@ enum StagedUploadTargetGenerateUploadResource {
     TIMELINE
     "Merchandising::Video resource representation."
     VIDEO
+}
+
+"""
+
+The possible error codes associated with making billing attempts. The error codes supplement the
+`error_message` to provide consistent results and help with dunning management.
+"""
+enum SubscriptionBillingAttemptErrorCode {
+    """
+
+    There was an error during the authentication.
+    """
+    AUTHENTICATION_ERROR
+    """
+
+    Payment method is expired.
+    """
+    EXPIRED_PAYMENT_METHOD
+    """
+
+    Payment method is invalid. Please update or create a new payment method.
+    """
+    INVALID_PAYMENT_METHOD
+    """
+
+    Payment method was declined by processor.
+    """
+    PAYMENT_METHOD_DECLINED
+    """
+
+    Payment method was not found.
+    """
+    PAYMENT_METHOD_NOT_FOUND
+    """
+
+    Payment provider is not enabled.
+    """
+    PAYMENT_PROVIDER_IS_NOT_ENABLED
+    """
+
+    Gateway is in test mode and attempted to bill a live payment method.
+    """
+    TEST_MODE
+    """
+
+    There was an unexpected error during the billing attempt.
+    """
+    UNEXPECTED_ERROR
 }
 
 "Possible error codes that could be returned by SubscriptionContractUserError."
@@ -19516,6 +19614,8 @@ input DraftOrderInput {
     Each draft order must include at least one line item.
     """
     lineItems: [DraftOrderLineItemInput!]
+    "The localization extensions attached to the draft order. For example, Tax IDs."
+    localizationExtensions: [LocalizationExtensionInput!]
     """
 
     Metafields attached to the draft order.
@@ -19778,6 +19878,17 @@ input InventoryLevelInput {
     locationId: ID!
 }
 
+"""
+
+Specifies the input fields for a LocalizationExtensionInput.
+"""
+input LocalizationExtensionInput {
+    "The key for the localization extension."
+    key: LocalizationExtensionKey!
+    "The localization extension value."
+    value: String!
+}
+
 "The fields used to create or update a mailing address."
 input MailingAddressInput {
     """
@@ -20028,6 +20139,8 @@ input OrderInput {
     email: String
     "The ID of the order to update."
     id: ID!
+    "The localization extensions attached to the order. For example, Tax IDs."
+    localizationExtensions: [LocalizationExtensionInput!]
     "The metafields to associate with this order."
     metafields: [MetafieldInput!]
     "The order note."
