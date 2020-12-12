@@ -7,7 +7,6 @@ export enum Type {
     RemoveSellingPlan,
     AddSellingPlan,
     UpdateSellingPlan,
-    CreateSellingPlanGroup,
 }
 
 export type Action =
@@ -33,27 +32,26 @@ export type Action =
     | {
           type: Type.UpdateSellingPlan;
           payload: SellingPlan;
-      }
-    | {
-          type: Type.CreateSellingPlanGroup;
       };
 
 export type Interval = 'DAY' | 'WEEK' | 'MONTH';
 
 export type SellingPlan = {
+    id: string;
     name: string;
     description: string;
-    id: string;
-    toCreate?: boolean;
-    toDelete?: boolean;
-    toUpdate?: boolean;
     deliveryPolicy: {
         interval: Interval;
+        intervalCount: number;
     };
+    // since delivery and billing policy have to be the same, we only use the delivery policy
+    toCreate?: true;
+    toUpdate?: true;
+    toDelete?: true;
 };
 
 export type SellingPlanGroup = {
-    id?: string;
+    id: string;
     name: string;
     description: string;
     sellingPlans: SellingPlan[];
@@ -67,13 +65,6 @@ let sellingPlanGroupReducer = (
     switch (action.type) {
         case Type.Load: {
             return action.payload;
-        }
-        case Type.CreateSellingPlanGroup: {
-            return {
-                name: 'New subscription',
-                description: '',
-                sellingPlans: [],
-            };
         }
         case Type.UpdateName: {
             return { ...sellingPlanGroup, name: action.payload };
@@ -111,6 +102,7 @@ let sellingPlanGroupReducer = (
                     toCreate: true,
                     deliveryPolicy: {
                         interval: 'DAY',
+                        intervalCount: 1,
                     },
                 },
             ]);
@@ -126,11 +118,14 @@ let sellingPlanGroupReducer = (
                     if (plan.id !== action.payload.id) {
                         return plan;
                     }
-                    return {
+                    const newPlan = {
                         ...plan,
                         ...action.payload,
-                        toUpdate: !plan.toCreate,
                     };
+                    if (!plan.toCreate) {
+                        newPlan.toUpdate = true;
+                    }
+                    return newPlan;
                 }),
             };
         }
@@ -145,10 +140,12 @@ const withLogging = (
     return (prevState, input) => {
         // eslint-disable-next-line no-console
         console.debug('IN', input);
-        const output = fn(prevState, input);
         // eslint-disable-next-line no-console
-        console.debug('OUT', output);
-        return output;
+        console.debug('BEFORE', prevState);
+        const nextState = fn(prevState, input);
+        // eslint-disable-next-line no-console
+        console.debug('AFTER', nextState);
+        return nextState;
     };
 };
 
