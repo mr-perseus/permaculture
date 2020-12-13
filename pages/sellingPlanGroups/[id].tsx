@@ -210,10 +210,12 @@ const UpdateSellingPlanGroup = ({
         </Page>
     );
 };
-
-const SellingPlanGroupContainer: React.FunctionComponent = () => {
-    const router = useRouter();
-    const gid = idToGid(router.query.id as string, 'SellingPlanGroup');
+const SellingPlanGroupContainer: React.FC<{ id: string }> = ({
+    id,
+}: {
+    id: string;
+}) => {
+    const gid = idToGid(id, 'SellingPlanGroup');
     const { loading, error, sellingPlanGroup } = useSellingPlanGroup(gid);
 
     if (loading) return <h4>Loading...</h4>;
@@ -230,4 +232,15 @@ const SellingPlanGroupContainer: React.FunctionComponent = () => {
     );
 };
 
-export default SellingPlanGroupContainer;
+const SellingPlanGroupContainerContainer: React.FunctionComponent = () => {
+    const router = useRouter();
+    const id = String(router.query?.id);
+
+    if (!id) {
+        return <h4>Loading...</h4>;
+    }
+
+    return <SellingPlanGroupContainer id={id} />;
+};
+
+export default SellingPlanGroupContainerContainer;

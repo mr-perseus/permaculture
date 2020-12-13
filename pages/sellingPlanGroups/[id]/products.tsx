@@ -50,7 +50,7 @@ const EditProducts = (): ReactElement => {
     if (loading) {
         return <>Loading...</>;
     }
-    if (!data) {
+    if (!data?.sellingPlanGroup) {
         return <>No data... </>;
     }
 

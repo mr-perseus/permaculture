@@ -96,7 +96,7 @@ function useLoadSellingPlanGroup(
     );
 
     useEffect(() => {
-        if (data) {
+        if (data?.sellingPlanGroup) {
             const loadedSellingPlanGroup = mapFromResult(data);
             setSellingPlanGroup(loadedSellingPlanGroup);
         }
