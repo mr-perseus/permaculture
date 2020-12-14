@@ -12,7 +12,7 @@ import {
 } from '@shopify/polaris';
 import { gidToId, idToGid } from '../../lib/utils';
 import EditSellingPlanGroup from '../../components/EditSellingPlanGroup';
-import EditSellingPlans from '../../components/EditSellingPlans';
+import SellingPlans from '../../components/SellingPlans';
 import sellingPlanGroupReducer, {
     Interval,
     SellingPlanGroup,
@@ -182,8 +182,8 @@ const UpdateSellingPlanGroup = ({
                             sellingPlanGroup={sellingPlanGroup}
                             dispatch={dispatch}
                         />
-                        <EditSellingPlans
-                            sellingPlans={sellingPlanGroup.sellingPlans}
+                        <SellingPlans
+                            sellingPlanGroup={sellingPlanGroup}
                             dispatch={dispatch}
                         />
 

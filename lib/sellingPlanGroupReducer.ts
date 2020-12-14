@@ -4,6 +4,8 @@ export enum Type {
     Load,
     UpdateName,
     UpdateDescription,
+    StartEditSellingPlan,
+    CancelEditSellingPlan,
     RemoveSellingPlan,
     AddSellingPlan,
     UpdateSellingPlan,
@@ -17,6 +19,13 @@ export type Action =
     | {
           type: Type.UpdateName;
           payload: string;
+      }
+    | {
+          type: Type.StartEditSellingPlan;
+          payload: string;
+      }
+    | {
+          type: Type.CancelEditSellingPlan;
       }
     | {
           type: Type.UpdateDescription;
@@ -55,6 +64,8 @@ export type SellingPlanGroup = {
     name: string;
     description: string;
     sellingPlans: SellingPlan[];
+    isEditingPlan: boolean;
+    currentlyEditingPlanId?: string;
 };
 
 // eslint-disable-next-line import/no-mutable-exports
@@ -71,6 +82,20 @@ let sellingPlanGroupReducer = (
         }
         case Type.UpdateDescription: {
             return { ...sellingPlanGroup, description: action.payload };
+        }
+        case Type.StartEditSellingPlan: {
+            return {
+                ...sellingPlanGroup,
+                isEditingPlan: true,
+                currentlyEditingPlanId: action.payload,
+            };
+        }
+        case Type.CancelEditSellingPlan: {
+            return {
+                ...sellingPlanGroup,
+                isEditingPlan: false,
+                currentlyEditingPlanId: undefined,
+            };
         }
         case Type.RemoveSellingPlan: {
             const updatedSellingPlans = sellingPlanGroup.sellingPlans.reduce(
@@ -114,6 +139,7 @@ let sellingPlanGroupReducer = (
         case Type.UpdateSellingPlan: {
             return {
                 ...sellingPlanGroup,
+                isEditingPlan: false,
                 sellingPlans: sellingPlanGroup.sellingPlans.map((plan) => {
                     if (plan.id !== action.payload.id) {
                         return plan;
