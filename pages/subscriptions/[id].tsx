@@ -4,8 +4,8 @@ import { ResourcePicker } from '@shopify/app-bridge-react';
 import gql from 'graphql-tag';
 import { Query, QueryResult } from 'react-apollo';
 import { Product } from '@shopify/app-bridge/actions/ResourcePicker';
-import { useRouter } from 'next/router';
 import { idToGid } from '../../lib/utils';
+import withId from '../../lib/withId';
 
 const GET_PRODUCT = gql`
     query getProduct($id: ID!) {
@@ -73,9 +73,8 @@ const SubscriptionForm = ({ product }: { product: Product }): ReactElement => {
     );
 };
 
-const Subscription = (): ReactElement => {
-    const router = useRouter();
-    const gid = idToGid(router.query.id as string, 'Product');
+const Subscription: React.FC<{ id: string }> = ({ id }: { id: string }) => {
+    const gid = idToGid(id, 'Product');
 
     return (
         <Query query={GET_PRODUCT} variables={{ id: gid }}>
@@ -90,4 +89,4 @@ const Subscription = (): ReactElement => {
     );
 };
 
-export default Subscription;
+export default withId(Subscription);

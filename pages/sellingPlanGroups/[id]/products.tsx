@@ -1,10 +1,10 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import { Badge, Layout, Page } from '@shopify/polaris';
 import { useQuery } from 'react-apollo';
 import { gql } from 'apollo-boost';
-import { useRouter } from 'next/router';
 import { idToGid } from '../../../lib/utils';
 import EditSellingPlanGroupProducts from '../../../components/EditSellingPlanGroupProducts';
+import withId from '../../../lib/withId';
 
 const GET_SELLING_PLAN_PRODUCTS = gql`
     query getSellingsPlanGroup($id: ID!) {
@@ -24,10 +24,8 @@ const GET_SELLING_PLAN_PRODUCTS = gql`
     }
 `;
 
-const EditProducts = (): ReactElement => {
-    const router = useRouter();
-    const { id } = router.query;
-    const gid = idToGid(id as string, 'SellingPlanGroup');
+const EditProducts: React.FC<{ id: string }> = ({ id }: { id: string }) => {
+    const gid = idToGid(id, 'SellingPlanGroup');
     const { data, loading, error } = useQuery<{
         sellingPlanGroup: {
             name: string;
@@ -60,7 +58,7 @@ const EditProducts = (): ReactElement => {
                 { content: 'Selling plan groups', url: '/' },
                 {
                     content: data.sellingPlanGroup.name,
-                    url: `/sellingPlanGroups/${id as string}`,
+                    url: `/sellingPlanGroups/${id}`,
                 },
             ]}
             title={data.sellingPlanGroup.name}
@@ -83,4 +81,4 @@ const EditProducts = (): ReactElement => {
     );
 };
 
-export default EditProducts;
+export default withId(EditProducts);

@@ -19,6 +19,7 @@ import sellingPlanGroupReducer, {
 } from '../../lib/sellingPlanGroupReducer';
 
 import useSellingPlanGroup from '../../lib/useSellingPlanGroup';
+import withId from '../../lib/withId';
 
 const UPDATE_SELLING_PLAN_GROUP = gql`
     mutation sellingPlanGroupUpdate($id: ID!, $input: SellingPlanGroupInput!) {
@@ -232,15 +233,4 @@ const SellingPlanGroupContainer: React.FC<{ id: string }> = ({
     );
 };
 
-const SellingPlanGroupContainerContainer: React.FunctionComponent = () => {
-    const router = useRouter();
-    const id = router.query?.id;
-
-    if (!id) {
-        return <h4>Loading...</h4>;
-    }
-
-    return <SellingPlanGroupContainer id={String(id)} />;
-};
-
-export default SellingPlanGroupContainerContainer;
+export default withId(SellingPlanGroupContainer);
