@@ -234,13 +234,13 @@ const SellingPlanGroupContainer: React.FC<{ id: string }> = ({
 
 const SellingPlanGroupContainerContainer: React.FunctionComponent = () => {
     const router = useRouter();
-    const id = String(router.query?.id);
+    const id = router.query?.id;
 
     if (!id) {
         return <h4>Loading...</h4>;
     }
 
-    return <SellingPlanGroupContainer id={id} />;
+    return <SellingPlanGroupContainer id={String(id)} />;
 };
 
 export default SellingPlanGroupContainerContainer;
