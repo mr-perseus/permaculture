@@ -64,6 +64,7 @@ const GET_SELLING_PLAN_GROUP = gql`
 function mapFromResult(data: SellingPlanGroupsResult): SellingPlanGroup {
     const loaded = data.sellingPlanGroup;
     return {
+        isEditingPlan: false,
         id: loaded.id,
         name: loaded.name,
         description: loaded.description,
