@@ -59,6 +59,7 @@
         "url": "git+https://github.com/mr-perseus/permaculture.git"
     },
     "dependencies": {
+        "@apollo/react-common": "^3.1.4",
         "@nano-sql/core": "2.3.7",
         "@shopify/app-bridge": "1.27.2",
         "@shopify/app-bridge-react": "1.27.2",
