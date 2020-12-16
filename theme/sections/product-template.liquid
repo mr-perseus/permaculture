@@ -159,9 +159,9 @@
           {%- endcapture %}
 
           {% form 'product', product, class:form_classes, novalidate: 'novalidate', data-product-form: '' %}
-            <p><b>TEST111</b></p>
+            <p>Selling plan groups</p>
             {% for group in product.selling_plan_groups %}
-              <p>TEST33331</p>
+              <p>Selling plan group</p>
               <fieldset>
                 <legend>{{ group.name}}</legend>
                 {% for selling_plan in group.selling_plans %}
