@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Button,
     Card,
+    Checkbox,
     extend,
     render,
     Stack,
@@ -11,86 +12,55 @@ import {
     useData,
     useLocale,
     useSessionToken,
+    useToast,
 } from '@shopify/argo-admin-react';
 import dotenv from 'dotenv';
-import { gql } from 'apollo-boost';
+import ApolloClient, { gql } from 'apollo-boost';
 
 dotenv.config();
 
-const TEST_CREATE_SELLING_PLAN = gql`
-    mutation {
-        sellingPlanGroupCreate(
-            input: {
-                name: "Subscribe and save"
-                merchantCode: "subscribe-and-save"
-                options: ["Delivery every"]
-                position: 1
-                sellingPlansToCreate: [
-                    {
-                        name: "Delivered every week"
-                        options: "1 Week(s)"
-                        position: 1
-                        billingPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 1 }
-                        }
-                        deliveryPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 1 }
-                        }
-                        pricingPolicies: [
-                            {
-                                fixed: {
-                                    adjustmentType: PERCENTAGE
-                                    adjustmentValue: { percentage: 15.0 }
-                                }
-                            }
-                        ]
-                    }
-                    {
-                        name: "Delivered every two weeks"
-                        options: "2 Week(s)"
-                        position: 2
-                        billingPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 2 }
-                        }
-                        deliveryPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 2 }
-                        }
-                        pricingPolicies: [
-                            {
-                                fixed: {
-                                    adjustmentType: PERCENTAGE
-                                    adjustmentValue: { percentage: 10.0 }
-                                }
-                            }
-                        ]
-                    }
-                    {
-                        name: "Delivered every three weeks"
-                        options: "3 Week(s)"
-                        position: 3
-                        billingPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 3 }
-                        }
-                        deliveryPolicy: {
-                            recurring: { interval: WEEK, intervalCount: 3 }
-                        }
-                        pricingPolicies: [
-                            {
-                                fixed: {
-                                    adjustmentType: PERCENTAGE
-                                    adjustmentValue: { percentage: 5.0 }
-                                }
-                            }
-                        ]
-                    }
-                ]
+const getClient = (sessionToken?: string) => {
+    return new ApolloClient({
+        // todo shop could be read from the url
+        uri: 'https://perma-subs.eu.ngrok.io/graphql',
+        fetchOptions: {
+            credentials: 'include',
+            headers: {
+                'Some-Auth-Token': sessionToken,
+            },
+        },
+    });
+};
+
+const GET_SELLING_PLANS = gql`
+    query {
+        sellingPlanGroups(first: 10) {
+            edges {
+                node {
+                    id
+                    name
+                }
             }
-            resources: { productIds: [], productVariantIds: [] }
-        ) {
+        }
+    }
+`;
+
+interface SellingPlanQueryResult {
+    sellingPlanGroups: {
+        edges: {
+            node: SellingPlan;
+        }[];
+    };
+}
+
+const CREATE_SELLING_PLAN = gql`
+    mutation($input: SellingPlanGroupInput!) {
+        sellingPlanGroupCreate(input: $input) {
             sellingPlanGroup {
                 id
             }
             userErrors {
+                code
                 field
                 message
             }
@@ -98,11 +68,11 @@ const TEST_CREATE_SELLING_PLAN = gql`
     }
 `;
 
-const CREATE_SELLING_PLAN = gql`
-    mutation($input: SellingPlanGroupInput!) {
-        sellingPlanGroupCreate(input: $input) {
-            sellingPlanGroup {
-                id
+const ADD_SELLING_PLAN = gql`
+    mutation addSellingPlan($id: ID!, $planIds: [ID!]!) {
+        productJoinSellingPlanGroups(id: $id, sellingPlanGroupIds: $planIds) {
+            product {
+                title
             }
             userErrors {
                 code
@@ -283,23 +253,15 @@ function Create() {
         return translations[locale] || translations.en;
     }, [locale]);
 
-    const { getSessionToken } = useSessionToken();
-
     // Mock plan settings
     const [planTitle, setPlanTitle] = useState('');
     const [percentageOff, setPercentageOff] = useState('');
     const [deliveryFrequency, setDeliveryFrequency] = useState('');
 
-    const onPrimaryAction = useCallback(async () => {
-        const token = await getSessionToken();
-        await getClient(token).mutate({
-            mutation: TEST_CREATE_SELLING_PLAN,
-            variables: {
-                id: data.productId,
-            },
-        });
+    const onPrimaryAction = useCallback(() => {
+        // todo create plan on API
         done();
-    }, [data.productId, done, getSessionToken]);
+    }, [done]);
 
     const actions = useMemo(
         () => (
@@ -489,7 +451,7 @@ function Edit() {
 // Your extension must render all four modes
 extend(
     'Admin::Product::SubscriptionPlan::Add',
-    render(() => <AddSellingPlan />),
+    render(() => <Add />),
 );
 extend(
     'Admin::Product::SubscriptionPlan::Create',
