@@ -1,7 +1,19 @@
 import gql from 'graphql-tag';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { useMutation } from 'react-apollo';
-import SellingPlanGroup from '../../components/SellingPlanGroup';
+import {
+    Button,
+    ButtonGroup,
+    Card,
+    Form,
+    FormLayout,
+    Frame,
+    Page,
+    TextField,
+    Toast,
+} from '@shopify/polaris';
+import { useRouter } from 'next/router';
+import { gidToId } from '../../lib/utils';
 
 const CREATE_SELLING_PLAN = gql`
     mutation($input: SellingPlanGroupInput!) {
@@ -20,7 +32,7 @@ const CREATE_SELLING_PLAN = gql`
 
 type SellingPlanGroupCreateResult = {
     sellingPlanGroupCreate: {
-        sellingPlanGroupCreate?: SellingPlanGroupCreate;
+        sellingPlanGroup?: { id: string };
         userErrors: {
             code: string;
             message: string;
@@ -32,17 +44,24 @@ type SellingPlanGroupCreate = {
     name: string;
     description?: string;
     options: string[];
-    sellingPlansToCreate: any[]; // TODO replace any with SellingPlan
-    products?: {
-        edges: {
-            node: ProductResult;
-        }[];
-    };
+    sellingPlansToCreate: SellingPlanCreate[]; // TODO replace any with SellingPlan
 };
 
-type ProductResult = {
-    id: string;
-    title: string;
+type SellingPlanCreate = {
+    name: string;
+    options: string[];
+    deliveryPolicy: {
+        recurring: {
+            interval: string;
+            intervalCount: number;
+        };
+    };
+    billingPolicy: {
+        recurring: {
+            interval: string;
+            intervalCount: number;
+        };
+    };
 };
 
 const CreateSellingPlanGroup = (): ReactElement => {
@@ -51,50 +70,98 @@ const CreateSellingPlanGroup = (): ReactElement => {
         { input: SellingPlanGroupCreate }
     >(CREATE_SELLING_PLAN);
 
-    return (
-        <SellingPlanGroup
-            modifySellingPlanGroup={async (description, name) => {
-                return createSellingPlanGroup({
-                    variables: {
-                        input: {
-                            description,
-                            name,
-                            // TODO remove this hardcoded stuff and add it to form
-                            options: ['Delivery every'],
-                            sellingPlansToCreate: [
-                                {
-                                    name: 'Delivered every week',
-                                    options: '1 Week(s)',
-                                    position: 1,
-                                    billingPolicy: {
-                                        recurring: {
-                                            interval: 'WEEK',
-                                            intervalCount: 1,
-                                        },
-                                    },
-                                    deliveryPolicy: {
-                                        recurring: {
-                                            interval: 'WEEK',
-                                            intervalCount: 1,
-                                        },
-                                    },
-                                    pricingPolicies: [
-                                        {
-                                            fixed: {
-                                                adjustmentType: 'PERCENTAGE',
-                                                adjustmentValue: {
-                                                    percentage: 15.0,
-                                                },
-                                            },
-                                        },
-                                    ],
+    const [name, setName] = useState('New selling plan group');
+    const [description, setDescription] = useState('');
+    const [showError, setShowError] = useState(false);
+    const router = useRouter();
+
+    const handleSubmit = async () => {
+        const { data, errors } = await createSellingPlanGroup({
+            variables: {
+                input: {
+                    name,
+                    description,
+                    options: ['one week'],
+                    sellingPlansToCreate: [
+                        {
+                            name: 'Weekly selling plan',
+                            options: ['1 Weekly'],
+                            billingPolicy: {
+                                recurring: {
+                                    interval: 'WEEK',
+                                    intervalCount: 1,
                                 },
-                            ],
+                            },
+                            deliveryPolicy: {
+                                recurring: {
+                                    interval: 'WEEK',
+                                    intervalCount: 1,
+                                },
+                            },
                         },
-                    },
-                });
-            }}
-        />
+                    ],
+                },
+            },
+        });
+
+        if (
+            (errors && errors.length > 0) ||
+            (data && data.sellingPlanGroupCreate.userErrors.length > 0)
+        ) {
+            setShowError(true);
+        } else if (
+            !data ||
+            !data.sellingPlanGroupCreate.sellingPlanGroup ||
+            !data.sellingPlanGroupCreate.sellingPlanGroup.id
+        ) {
+            setShowError(true);
+        } else {
+            const id = gidToId(data.sellingPlanGroupCreate.sellingPlanGroup.id);
+            await router.replace(`/sellingPlanGroups/${id}`);
+        }
+    };
+
+    return (
+        <>
+            <Page
+                title="Create new selling plan group"
+                breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
+            >
+                <Frame>
+                    <Card>
+                        <Card.Section>
+                            <Form onSubmit={handleSubmit}>
+                                <FormLayout>
+                                    <TextField
+                                        label="Name"
+                                        value={name}
+                                        onChange={setName}
+                                    />
+                                    <TextField
+                                        label="Description"
+                                        value={description}
+                                        onChange={setDescription}
+                                    />
+                                    <ButtonGroup>
+                                        <Button url="/">Cancel</Button>
+                                        <Button submit primary>
+                                            Create
+                                        </Button>
+                                    </ButtonGroup>
+                                </FormLayout>
+                            </Form>
+                        </Card.Section>
+                    </Card>
+                    {showError && (
+                        <Toast
+                            content="Fatal error"
+                            error
+                            onDismiss={() => setShowError(false)}
+                        />
+                    )}
+                </Frame>
+            </Page>
+        </>
     );
 };
 
