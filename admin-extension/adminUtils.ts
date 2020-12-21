@@ -1,7 +1,7 @@
+import { useToast } from '@shopify/argo-admin-react';
 import ApolloClient from 'apollo-boost';
 import { GraphQLError } from 'graphql';
 
-// eslint-disable-next-line import/prefer-default-export
 export function getClient(sessionToken?: string): ApolloClient<never> {
     return new ApolloClient({
         // todo shop could be read from the url
@@ -16,19 +16,17 @@ export function getClient(sessionToken?: string): ApolloClient<never> {
     });
 }
 
-interface ShowGraphQlErrorsParams {
-    showToast: (message: string, { error }?: { error: boolean }) => void;
-    errors: readonly GraphQLError[];
-}
+export function useGraphQLErrorToast(): (
+    errors: readonly GraphQLError[],
+) => void {
+    const { show } = useToast();
 
-export const showGraphQlErrors = ({
-    showToast,
-    errors,
-}: ShowGraphQlErrorsParams): void => {
-    showToast(
-        `Error in request: <br /> ${errors
-            .map((err) => err.message)
-            .join(' - ')} `,
-        { error: true },
-    );
-};
+    return (errors: readonly GraphQLError[]) => {
+        show(
+            `Error in request: <br /> ${errors
+                .map((err) => err.message)
+                .join(' - ')} `,
+            { error: true },
+        );
+    };
+}

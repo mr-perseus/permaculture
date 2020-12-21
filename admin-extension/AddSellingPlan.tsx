@@ -11,9 +11,8 @@ import {
     useToast,
 } from '@shopify/argo-admin-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Add } from '@shopify/argo-admin/extension-api/data/product-subscription/data';
 import { translations, Translations } from './adminTranslations';
-import { getClient, showGraphQlErrors } from './adminUtils';
+import { getClient, useGraphQLErrorToast } from './adminUtils';
 
 const GET_SELLING_PLANS = gql`
     query sellingPlanGroups($productId: ID!) {
@@ -126,7 +125,13 @@ async function addRemote(
     });
 }
 
-async function fetchPlans(sessionToken: string | undefined, data: Add) {
+async function fetchPlans(
+    sessionToken: string | undefined,
+    data: {
+        productId: string;
+        variantId?: string;
+    },
+) {
     if (!data.variantId) {
         return getClient(sessionToken).query<SellingPlanQueryResult>({
             query: GET_SELLING_PLANS,
@@ -155,6 +160,7 @@ export default function AddSellingPlan(): JSX.Element {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const { show: showToast } = useToast();
+    const showGraphQLError = useGraphQLErrorToast();
     const locale = useLocale();
     const localizedStrings: Translations = useMemo(() => {
         // eslint-disable-next-line security/detect-object-injection
@@ -167,33 +173,29 @@ export default function AddSellingPlan(): JSX.Element {
 
     useEffect(() => {
         const getPlans = async () => {
-            try {
-                const sessionToken = await getSessionToken();
+            const sessionToken = await getSessionToken();
 
-                const { data: sellingPlanData, errors } = await fetchPlans(
-                    sessionToken,
-                    data,
-                );
+            const { data: sellingPlanData, errors } = await fetchPlans(
+                sessionToken,
+                data,
+            );
 
-                if (errors && errors.length > 0) {
-                    showToast(`Graphql error fetching plans`, {
-                        error: true,
-                    });
-                } else {
-                    setAvailablePlans(
-                        sellingPlanData.sellingPlanGroups.edges.map(
-                            (edge) => edge.node,
-                        ),
-                    );
-                }
-            } catch (err) {
-                showToast(`Error fetching plans`, {
-                    error: true,
-                });
+            if (errors && errors.length > 0) {
+                throw Error(`GraphQLError: ${errors.join(', ')}`);
             }
+
+            setAvailablePlans(
+                sellingPlanData.sellingPlanGroups.edges.map(
+                    (edge) => edge.node,
+                ),
+            );
         };
-        // eslint-disable-next-line no-void
-        void getPlans();
+
+        getPlans().catch(() => {
+            showToast(`Error fetching plans`, {
+                error: true,
+            });
+        });
     }, [data, getSessionToken, showToast]);
 
     useEffect(() => {
@@ -210,10 +212,7 @@ export default function AddSellingPlan(): JSX.Element {
                     );
 
                     if (errors && errors?.length > 0) {
-                        showGraphQlErrors({
-                            showToast,
-                            errors,
-                        });
+                        showGraphQLError(errors);
                     } else {
                         done();
                     }
@@ -238,6 +237,7 @@ export default function AddSellingPlan(): JSX.Element {
         showToast,
         data,
         selectedPlans,
+        showGraphQLError,
     ]);
 
     return (

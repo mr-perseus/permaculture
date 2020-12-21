@@ -8,7 +8,7 @@ import {
 } from '@shopify/argo-admin-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { translations, Translations } from './adminTranslations';
-import { getClient } from './adminUtils';
+import { getClient, useGraphQLErrorToast } from './adminUtils';
 
 // eslint-disable-next-line no-secrets/no-secrets
 const REMOVE_PRODUCT_FROM_GROUP = gql`
@@ -65,6 +65,35 @@ const REMOVE_VARIANTS_FROM_GROUP = gql`
     }
 `;
 
+async function removeProductOrVariant(
+    data: {
+        productId: string;
+        variantId?: string;
+        sellingPlanGroupId: string;
+        variantIds: string[];
+    },
+    sessionToken: string | undefined,
+) {
+    if (data.variantId) {
+        return getClient(sessionToken).mutate({
+            mutation: REMOVE_VARIANTS_FROM_GROUP,
+            variables: {
+                id: data.sellingPlanGroupId,
+                productVariantIds: [data.variantId],
+            },
+        });
+    }
+    return getClient(sessionToken).mutate({
+        mutation: REMOVE_PRODUCT_FROM_GROUP,
+        variables: {
+            id: data.productId,
+            sellingPlanGroupIds: [data.sellingPlanGroupId],
+            productVariantIds: data.variantIds,
+            sellingPlanGroupId: data.sellingPlanGroupId,
+        },
+    });
+}
+
 export default function Remove(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Remove'>();
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -79,40 +108,27 @@ export default function Remove(): JSX.Element {
 
     const { getSessionToken } = useSessionToken();
     const [error, setError] = useState(undefined);
+    const showGraphQLError = useGraphQLErrorToast();
 
     useEffect(() => {
         setPrimaryAction({
             content: 'Remove from plan',
             onAction: () => {
                 async function remove() {
-                    if (data.variantId) {
-                        await getClient(await getSessionToken()).mutate({
-                            mutation: REMOVE_VARIANTS_FROM_GROUP,
-                            variables: {
-                                id: data.sellingPlanGroupId,
-                                productVariantIds: [data.variantId],
-                            },
-                        });
-                    } else {
-                        await getClient(await getSessionToken()).mutate({
-                            mutation: REMOVE_PRODUCT_FROM_GROUP,
-                            variables: {
-                                id: data.productId,
-                                sellingPlanGroupIds: [data.sellingPlanGroupId],
-                                productVariantIds: data.variantIds,
-                                sellingPlanGroupId: data.sellingPlanGroupId,
-                            },
-                        });
+                    const sessionToken = await getSessionToken();
+                    const something = await removeProductOrVariant(
+                        data,
+                        sessionToken,
+                    );
+                    if (something.errors && something.errors.length > 0) {
+                        showGraphQLError(something.errors);
+                        throw Error('GraphQLError');
                     }
+
                     done();
                 }
 
-                try {
-                    // eslint-disable-next-line no-void
-                    void remove();
-                } catch (err) {
-                    setError(err);
-                }
+                remove().catch(setError);
             },
         });
 
@@ -126,10 +142,8 @@ export default function Remove(): JSX.Element {
         close,
         setPrimaryAction,
         setSecondaryAction,
-        data.variantId,
-        data.variantIds,
-        data.sellingPlanGroupId,
-        data.productId,
+        data,
+        showGraphQLError,
     ]);
 
     if (error) {
