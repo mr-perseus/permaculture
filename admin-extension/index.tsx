@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     Button,
     Card,
@@ -13,12 +13,91 @@ import {
     useSessionToken,
 } from '@shopify/argo-admin-react';
 import { gql } from 'apollo-boost';
-import dotenv from 'dotenv';
 import AddSellingPlan from './AddSellingPlan';
 import { getClient } from './adminUtils';
 import { Translations, translations } from './adminTranslations';
+import Remove from './RemoveSellingPlan';
 
-dotenv.config();
+const TEST_CREATE_SELLING_PLAN = gql`
+    mutation {
+        sellingPlanGroupCreate(
+            input: {
+                name: "Subscribe and save"
+                merchantCode: "subscribe-and-save"
+                options: ["Delivery every"]
+                position: 1
+                sellingPlansToCreate: [
+                    {
+                        name: "Delivered every week"
+                        options: "1 Week(s)"
+                        position: 1
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 1 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 1 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 15.0 }
+                                }
+                            }
+                        ]
+                    }
+                    {
+                        name: "Delivered every two weeks"
+                        options: "2 Week(s)"
+                        position: 2
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 2 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 2 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 10.0 }
+                                }
+                            }
+                        ]
+                    }
+                    {
+                        name: "Delivered every three weeks"
+                        options: "3 Week(s)"
+                        position: 3
+                        billingPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 3 }
+                        }
+                        deliveryPolicy: {
+                            recurring: { interval: WEEK, intervalCount: 3 }
+                        }
+                        pricingPolicies: [
+                            {
+                                fixed: {
+                                    adjustmentType: PERCENTAGE
+                                    adjustmentValue: { percentage: 5.0 }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            resources: { productIds: [], productVariantIds: [] }
+        ) {
+            sellingPlanGroup {
+                id
+            }
+            userErrors {
+                field
+                message
+            }
+        }
+    }
+`;
 
 const CREATE_SELLING_PLAN = gql`
     mutation($input: SellingPlanGroupInput!) {
@@ -48,15 +127,23 @@ function Create() {
         return translations[locale] || translations.en;
     }, [locale]);
 
+    const { getSessionToken } = useSessionToken();
+
     // Mock plan settings
     const [planTitle, setPlanTitle] = useState('');
     const [percentageOff, setPercentageOff] = useState('');
     const [deliveryFrequency, setDeliveryFrequency] = useState('');
 
-    const onPrimaryAction = useCallback(() => {
-        // todo create plan on API
+    const onPrimaryAction = useCallback(async () => {
+        const token = await getSessionToken();
+        await getClient(token).mutate({
+            mutation: TEST_CREATE_SELLING_PLAN,
+            variables: {
+                id: data.productId,
+            },
+        });
         done();
-    }, [done]);
+    }, [data.productId, done, getSessionToken]);
 
     const actions = useMemo(
         () => (
@@ -111,49 +198,6 @@ function Create() {
             </Card>
 
             {actions}
-        </>
-    );
-}
-
-// 'Remove' mode should remove the current product from a selling plan.
-// This should not delete the selling plan.
-// [Shopify admin renders this mode inside a modal container]
-function Remove() {
-    const data = useData<'Admin::Product::SubscriptionPlan::Remove'>();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done, setPrimaryAction, setSecondaryAction } = useContainer<
-        'Admin::Product::SubscriptionPlan::Remove'
-    >();
-    const locale = useLocale();
-    const localizedStrings: Translations = useMemo(() => {
-        // eslint-disable-next-line security/detect-object-injection
-        return translations[locale] || translations.en;
-    }, [locale]);
-
-    const { getSessionToken } = useSessionToken();
-
-    useEffect(() => {
-        setPrimaryAction({
-            content: 'Remove from plan',
-            onAction: () => {
-                // todo remove plan
-                done();
-            },
-        });
-
-        setSecondaryAction({
-            content: 'Cancel',
-            onAction: () => close(),
-        });
-    }, [getSessionToken, done, close, setPrimaryAction, setSecondaryAction]);
-
-    return (
-        <>
-            <Text size="titleLarge">{localizedStrings.hello}!</Text>
-            <Text>
-                Remove {`{Product id ${data.productId}}`} from{' '}
-                {`{Plan group id ${data.sellingPlanGroupId}}`}
-            </Text>
         </>
     );
 }

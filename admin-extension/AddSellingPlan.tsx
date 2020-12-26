@@ -1,8 +1,8 @@
 import { gql } from 'apollo-boost';
-import { GraphQLError } from 'graphql';
 import {
     Checkbox,
-    Stack,
+    ResourceItem,
+    ResourceList,
     Text,
     useContainer,
     useData,
@@ -12,15 +12,31 @@ import {
 } from '@shopify/argo-admin-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { translations, Translations } from './adminTranslations';
-import { getClient } from './adminUtils';
+import { getClient, useGraphQLErrorToast } from './adminUtils';
 
 const GET_SELLING_PLANS = gql`
-    query {
+    query sellingPlanGroups($productId: ID!) {
         sellingPlanGroups(first: 10) {
             edges {
                 node {
                     id
                     name
+                    appliesToProduct(productId: $productId)
+                }
+            }
+        }
+    }
+`;
+
+const GET_SELLING_PLANS_VARIANT = gql`
+    query sellingPlanGroups($productVariantId: ID!, $productId: ID!) {
+        sellingPlanGroups(first: 10) {
+            edges {
+                node {
+                    id
+                    name
+                    appliesToProductVariant(productVariantId: $productVariantId)
+                    appliesToProduct(productId: $productId)
                 }
             }
         }
@@ -34,6 +50,14 @@ interface SellingPlanQueryResult {
         }[];
     };
 }
+
+interface SellingPlan {
+    id: string;
+    name: string;
+    appliesToProduct: boolean;
+    appliesToProductVariant?: boolean;
+}
+
 const ADD_SELLING_PLAN = gql`
     mutation productJoinSellingPlanGroups(
         $id: ID!
@@ -76,25 +100,6 @@ const ADD_SELLING_PLAN_VARIANT = gql`
     }
 `;
 
-interface SellingPlan {
-    id: string;
-    name: string;
-}
-
-interface ShowGraphQlErrorsParams {
-    showToast: (message: string, { error }?: { error: boolean }) => void;
-    errors: readonly GraphQLError[];
-}
-
-const showGraphQlErrors = ({ showToast, errors }: ShowGraphQlErrorsParams) => {
-    showToast(
-        `Error in request: <br /> ${errors
-            .map((err) => err.message)
-            .join(' - ')} `,
-        { error: true },
-    );
-};
-
 async function addRemote(
     token: string | undefined,
     selectedPlans: string[],
@@ -120,6 +125,31 @@ async function addRemote(
     });
 }
 
+async function fetchPlans(
+    sessionToken: string | undefined,
+    data: {
+        productId: string;
+        variantId?: string;
+    },
+) {
+    if (!data.variantId) {
+        return getClient(sessionToken).query<SellingPlanQueryResult>({
+            query: GET_SELLING_PLANS,
+            variables: {
+                productId: data.productId,
+            },
+        });
+    }
+
+    return getClient(sessionToken).query<SellingPlanQueryResult>({
+        query: GET_SELLING_PLANS_VARIANT,
+        variables: {
+            productVariantId: data.variantId,
+            productId: data.productId,
+        },
+    });
+}
+
 export default function AddSellingPlan(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Add'>();
 
@@ -130,6 +160,7 @@ export default function AddSellingPlan(): JSX.Element {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const { show: showToast } = useToast();
+    const showGraphQLError = useGraphQLErrorToast();
     const locale = useLocale();
     const localizedStrings: Translations = useMemo(() => {
         // eslint-disable-next-line security/detect-object-injection
@@ -141,32 +172,31 @@ export default function AddSellingPlan(): JSX.Element {
     const [availablePlans, setAvailablePlans] = useState<SellingPlan[]>([]);
 
     useEffect(() => {
-        const fetchPlans = async () => {
-            try {
-                const sessionToken = await getSessionToken();
-                const { data: sellingPlanData, errors } = await getClient(
-                    sessionToken,
-                ).query<SellingPlanQueryResult>({
-                    query: GET_SELLING_PLANS,
-                });
-                if (errors && errors.length > 0) {
-                    showGraphQlErrors({ showToast, errors });
-                } else {
-                    setAvailablePlans(
-                        sellingPlanData.sellingPlanGroups.edges.map(
-                            (edge) => edge.node,
-                        ),
-                    );
-                }
-            } catch (err) {
-                showToast(`Error fetching plans`, {
-                    error: true,
-                });
+        const getPlans = async () => {
+            const sessionToken = await getSessionToken();
+
+            const { data: sellingPlanData, errors } = await fetchPlans(
+                sessionToken,
+                data,
+            );
+
+            if (errors && errors.length > 0) {
+                throw Error(`GraphQLError: ${errors.join(', ')}`);
             }
+
+            setAvailablePlans(
+                sellingPlanData.sellingPlanGroups.edges.map(
+                    (edge) => edge.node,
+                ),
+            );
         };
-        // eslint-disable-next-line no-void
-        void fetchPlans();
-    }, [getSessionToken, showToast]);
+
+        getPlans().catch(() => {
+            showToast(`Error fetching plans`, {
+                error: true,
+            });
+        });
+    }, [data, getSessionToken, showToast]);
 
     useEffect(() => {
         setPrimaryAction({
@@ -182,10 +212,7 @@ export default function AddSellingPlan(): JSX.Element {
                     );
 
                     if (errors && errors?.length > 0) {
-                        showGraphQlErrors({
-                            showToast,
-                            errors,
-                        });
+                        showGraphQLError(errors);
                     } else {
                         done();
                     }
@@ -210,6 +237,7 @@ export default function AddSellingPlan(): JSX.Element {
         showToast,
         data,
         selectedPlans,
+        showGraphQLError,
     ]);
 
     return (
@@ -220,21 +248,37 @@ export default function AddSellingPlan(): JSX.Element {
                 existing plans
             </Text>
 
-            <Stack>
-                {availablePlans.map((plan) => (
-                    <Checkbox
-                        key={plan.id}
-                        label={plan.name}
-                        onChange={(checked) => {
-                            const plans = checked
-                                ? selectedPlans.concat(plan.id)
-                                : selectedPlans.filter((id) => id !== plan.id);
-                            setSelectedPlans(plans);
-                        }}
-                        checked={selectedPlans.includes(plan.id)}
-                    />
-                ))}
-            </Stack>
+            <ResourceList>
+                {availablePlans
+                    .filter(
+                        (plan) =>
+                            !plan.appliesToProduct &&
+                            !plan.appliesToProductVariant,
+                    )
+                    .map((plan) => (
+                        <ResourceItem
+                            onPress={() => {
+                                // nop
+                            }}
+                            id={plan.id}
+                            key={plan.id}
+                        >
+                            <Checkbox
+                                key={plan.id}
+                                label={plan.name}
+                                onChange={(checked) => {
+                                    const plans = checked
+                                        ? selectedPlans.concat(plan.id)
+                                        : selectedPlans.filter(
+                                              (id) => id !== plan.id,
+                                          );
+                                    setSelectedPlans(plans);
+                                }}
+                                checked={selectedPlans.includes(plan.id)}
+                            />
+                        </ResourceItem>
+                    ))}
+            </ResourceList>
         </>
     );
 }

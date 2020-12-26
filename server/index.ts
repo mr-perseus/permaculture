@@ -12,7 +12,7 @@ import getSubscriptionUrl from './getSubscriptionUrl';
 
 dotenv.config();
 
-const port = parseInt(String(process.env.PORT), 10) || 3000;
+const port = parseInt(String(process.env.PORT), 10) || 8081;
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
