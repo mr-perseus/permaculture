@@ -3,9 +3,6 @@
     "name": "shopify-demo-app-node-react",
     "version": "1.0.0",
     "main": "dist/index.js",
-    "workspaces": [
-        "admin-extension"
-    ],
     "engines": {
         "node": ">=12",
         "npm": "^6.14.6",
