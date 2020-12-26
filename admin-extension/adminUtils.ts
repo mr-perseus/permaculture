@@ -6,7 +6,7 @@ export function getClient(sessionToken?: string): ApolloClient<never> {
     return new ApolloClient({
         // todo shop could be read from the url
         // uri: `${String(process.env.HOST)}/graphql`,
-        uri: `https://8762496672f9.ngrok.io` + '/graphql',
+        uri: 'https://9f655a61f1b7.ngrok.io/graphql',
         fetchOptions: {
             credentials: 'include',
             headers: {
@@ -19,10 +19,10 @@ export function getClient(sessionToken?: string): ApolloClient<never> {
 export function useGraphQLErrorToast(): (
     errors: readonly GraphQLError[],
 ) => void {
-    const { show } = useToast();
+    const toast = useToast();
 
     return (errors: readonly GraphQLError[]) => {
-        show(
+        toast.show(
             `Error in request: <br /> ${errors
                 .map((err) => err.message)
                 .join(' - ')} `,
