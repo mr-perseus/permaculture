@@ -72,7 +72,7 @@ app.prepare()
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-            const jwtFromHeader = ctx.headers['some-auth-token'];
+            const jwtFromHeader = ctx.headers['auth-token'];
 
             const shopUrl =
                 ctx.cookies.get('shopOrigin') ||

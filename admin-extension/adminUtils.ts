@@ -8,7 +8,7 @@ export function getClient(sessionToken?: string): ApolloClient<never> {
         // uri: `${String(process.env.HOST)}/graphql`,
         uri: 'https://permaculture-app.herokuapp.com/graphql',
         headers: {
-            'Some-Auth-Token': sessionToken,
+            'auth-token': sessionToken,
         },
     });
 }
