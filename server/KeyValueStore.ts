@@ -22,9 +22,7 @@ class KeyValueStore {
                   dialect: 'sqlite',
                   storage: 'store.db',
               })
-            : new Sequelize(
-                  String(process.env.PLUGIN_CONFIGURATION_DATABASE_URL),
-              );
+            : new Sequelize(String(process.env.DATABASE_URL));
 
         this.storeTokens = sequelize.define<AppPropertiesInstance>(
             modelName,
