@@ -9,7 +9,6 @@ import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
 import jwt_decode from 'jwt-decode';
-import getSubscriptionUrl from './getSubscriptionUrl';
 import configManager from './ConfigManager';
 
 dotenv.config();
@@ -56,12 +55,22 @@ app.prepare()
 
                     await configManager.updateToken(shop, accessToken);
 
-                    await getSubscriptionUrl(ctx, accessToken, shop);
+                    ctx.redirect(`/?shop=${String(shop)}`);
                 },
             }),
         );
 
-        server.use(async (ctx, next2: () => Promise<any>) => {
+        server.use(async (ctx, next2: () => Promise<void>) => {
+            // TODO find better way of determine whether we are in context of registration
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (ctx.query.hmac && ctx.query.session) {
+                // eslint-disable-next-line no-console
+                console.warn('Skipping token middleware. Query:', ctx.query);
+
+                await next2();
+                return;
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
             const jwtFromHeader = ctx.headers['some-auth-token'];
 
@@ -77,16 +86,14 @@ app.prepare()
                 throw new Error('Authentication invalid.');
             }
 
-            if (shopUrl) {
-                const cleanedShopUrl = shopUrl.startsWith('http')
-                    ? new URL(shopUrl).host
-                    : shopUrl;
+            const cleanedShopUrl = shopUrl.startsWith('http')
+                ? new URL(shopUrl).host
+                : shopUrl;
 
-                const token = await configManager.getToken(cleanedShopUrl);
+            const token = await configManager.getToken(cleanedShopUrl);
 
-                contextSession.shop = cleanedShopUrl;
-                contextSession.accessToken = token;
-            }
+            contextSession.shop = cleanedShopUrl;
+            contextSession.accessToken = token;
 
             await next2();
         });
