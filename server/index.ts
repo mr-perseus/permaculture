@@ -9,7 +9,7 @@ import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
 import jwt_decode from 'jwt-decode';
-import configManager from './ConfigManager';
+import keyValueStore from './KeyValueStore';
 
 dotenv.config();
 
@@ -53,7 +53,7 @@ app.prepare()
                         sameSite: 'none',
                     });
 
-                    await configManager.updateToken(shop, accessToken);
+                    await keyValueStore.updateToken(shop, accessToken);
 
                     ctx.redirect(`/?shop=${String(shop)}`);
                 },
@@ -90,7 +90,7 @@ app.prepare()
                 ? new URL(shopUrl).host
                 : shopUrl;
 
-            const token = await configManager.getToken(cleanedShopUrl);
+            const token = await keyValueStore.getToken(cleanedShopUrl);
 
             contextSession.shop = cleanedShopUrl;
             contextSession.accessToken = token;

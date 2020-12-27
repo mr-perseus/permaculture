@@ -2,19 +2,17 @@ import { Model, ModelCtor, Sequelize, STRING } from 'sequelize';
 
 const MODEL_NAME = 'Store';
 
-interface AppPropertiesAttributes {
+interface StoreToken {
     storeUrl: string;
     token: string;
 }
 
-interface AppPropertiesInstance
-    extends Model<AppPropertiesAttributes>,
-        AppPropertiesAttributes {}
+interface AppPropertiesInstance extends Model<StoreToken>, StoreToken {}
 
-class ConfigManager {
-    private readonly appProperties: ModelCtor<AppPropertiesInstance>;
+class KeyValueStore {
+    private readonly storeTokens: ModelCtor<AppPropertiesInstance>;
 
-    private readonly connectionPromise: Promise<Model<AppPropertiesAttributes>>;
+    private readonly connectionPromise: Promise<Model<StoreToken>>;
 
     public constructor(modelName: string) {
         const devEnv = process.env.NODE_ENV !== 'production';
@@ -28,7 +26,7 @@ class ConfigManager {
                   String(process.env.PLUGIN_CONFIGURATION_DATABASE_URL),
               );
 
-        this.appProperties = sequelize.define<AppPropertiesInstance>(
+        this.storeTokens = sequelize.define<AppPropertiesInstance>(
             modelName,
             {
                 storeUrl: {
@@ -51,46 +49,29 @@ class ConfigManager {
             },
         );
 
-        this.connectionPromise = this.appProperties.sync();
+        this.connectionPromise = this.storeTokens.sync();
     }
 
     public async getToken(storeUrl: string): Promise<string | undefined> {
         await this.connectionPromise;
 
-        const entry: AppPropertiesAttributes | null = (await this.appProperties.findOne(
-            {
-                where: { storeUrl },
-            },
-        )) as AppPropertiesAttributes | null;
+        const entry: StoreToken | null = (await this.storeTokens.findOne({
+            where: { storeUrl },
+        })) as StoreToken | null;
 
         return entry?.token;
     }
 
-    public async updateToken(
-        storeUrl: string,
-        token: string,
-    ): Promise<boolean> {
+    public async updateToken(storeUrl: string, token: string): Promise<void> {
         await this.connectionPromise;
 
-        const updatedAppProperties = await this.appProperties.upsert({
+        await this.storeTokens.upsert({
             storeUrl,
             token,
-        });
-
-        return !!updatedAppProperties?.[0];
-    }
-
-    public async removeToken(storeUrl: string): Promise<void> {
-        await this.connectionPromise;
-
-        await this.appProperties.destroy({
-            where: {
-                storeUrl,
-            },
         });
     }
 }
 
-const configManager = new ConfigManager(MODEL_NAME);
+const keyValueStore = new KeyValueStore(MODEL_NAME);
 
-export default configManager;
+export default keyValueStore;
