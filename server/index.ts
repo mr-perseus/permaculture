@@ -8,7 +8,9 @@ import session, { Session } from 'koa-session';
 import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
+import jwt_decode from 'jwt-decode';
 import getSubscriptionUrl from './getSubscriptionUrl';
+import configManager from './ConfigManager';
 
 dotenv.config();
 
@@ -52,16 +54,39 @@ app.prepare()
                         sameSite: 'none',
                     });
 
-                    ctx.cookies.set('accessToken', accessToken, {
-                        httpOnly: false,
-                        secure: true,
-                        sameSite: 'none',
-                    });
+                    await configManager.updateToken(shop, accessToken);
 
                     await getSubscriptionUrl(ctx, accessToken, shop);
                 },
             }),
         );
+
+        server.use(async (ctx, next2: () => Promise<any>) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+            const jwtFromHeader = ctx.headers['some-auth-token'];
+
+            const shopUrl =
+                ctx.cookies.get('shopOrigin') ||
+                (jwtFromHeader
+                    ? jwt_decode<{ dest: string }>(jwtFromHeader).dest
+                    : '');
+
+            if (shopUrl) {
+                const cleanedShopUrl = shopUrl.startsWith('http')
+                    ? new URL(shopUrl).pathname
+                    : shopUrl;
+
+                const token = await configManager.getToken(cleanedShopUrl);
+
+                ctx.shop = cleanedShopUrl;
+                ctx.accessToken = token;
+            }
+
+            console.log(ctx.shop);
+            console.log(ctx.accessToken);
+
+            await next2();
+        });
 
         server.use(
             graphQLProxy({

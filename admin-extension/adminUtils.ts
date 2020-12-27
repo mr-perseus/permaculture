@@ -6,12 +6,9 @@ export function getClient(sessionToken?: string): ApolloClient<never> {
     return new ApolloClient({
         // todo shop could be read from the url
         // uri: `${String(process.env.HOST)}/graphql`,
-        uri: 'https://9f655a61f1b7.ngrok.io/graphql',
-        fetchOptions: {
-            credentials: 'include',
-            headers: {
-                'Some-Auth-Token': sessionToken,
-            },
+        uri: 'https://37aa9a187468.ngrok.io/graphql',
+        headers: {
+            'Some-Auth-Token': sessionToken,
         },
     });
 }
