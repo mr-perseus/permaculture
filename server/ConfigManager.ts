@@ -20,7 +20,10 @@ class ConfigManager {
         const devEnv = process.env.NODE_ENV !== 'production';
 
         const sequelize = devEnv
-            ? new Sequelize('sqlite::memory:')
+            ? new Sequelize({
+                  dialect: 'sqlite',
+                  storage: 'store.db',
+              })
             : new Sequelize(
                   String(process.env.PLUGIN_CONFIGURATION_DATABASE_URL),
               );

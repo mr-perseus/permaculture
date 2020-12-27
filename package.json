@@ -45,7 +45,7 @@
     "scripts": {
         "downloadSchema": "./downloadShopifyGraphqlSchema.js",
         "test": "jest",
-        "dev": "ts-node-dev --inspect --respawn --transpile-only --project tsconfig.server.json server/index.ts",
+        "dev": "nodemon",
         "build": "next build && tsc --project tsconfig.server.json",
         "start": "node dist/index.js",
         "lint": "eslint . --ext .js,.jsx,.ts,.tsx",

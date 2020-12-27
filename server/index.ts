@@ -71,19 +71,22 @@ app.prepare()
                     ? jwt_decode<{ dest: string }>(jwtFromHeader).dest
                     : '');
 
+            const contextSession = ctx.session;
+
+            if (!contextSession || !shopUrl) {
+                throw new Error('Authentication invalid.');
+            }
+
             if (shopUrl) {
                 const cleanedShopUrl = shopUrl.startsWith('http')
-                    ? new URL(shopUrl).pathname
+                    ? new URL(shopUrl).host
                     : shopUrl;
 
                 const token = await configManager.getToken(cleanedShopUrl);
 
-                ctx.shop = cleanedShopUrl;
-                ctx.accessToken = token;
+                contextSession.shop = cleanedShopUrl;
+                contextSession.accessToken = token;
             }
-
-            console.log(ctx.shop);
-            console.log(ctx.accessToken);
 
             await next2();
         });
