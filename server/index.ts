@@ -18,9 +18,9 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const { SHOPIFY_API_SECRET, SHOPIFY_API_KEY, HOST, SHOP, SCOPES } = process.env;
+const { SHOPIFY_API_SECRET, SHOPIFY_API_KEY, HOST, SCOPES } = process.env;
 
-if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SHOP || !SCOPES) {
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
     throw new Error(
         'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SHOP',
     );
