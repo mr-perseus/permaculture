@@ -17905,7 +17905,7 @@ enum ProductSortKeys {
 
 "The possible product statuses."
 enum ProductStatus {
-    "The product is ready to sell and is available to customers on the online store, sales channels, and apps. By default, existing products are set to active."
+
     ACTIVE
     "The product is no longer being sold and isn't available to customers on sales channels and apps."
     ARCHIVED

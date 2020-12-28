@@ -8,28 +8,30 @@ import session, { Session } from 'koa-session';
 import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
-import getSubscriptionUrl from './getSubscriptionUrl';
+import jwt_decode from 'jwt-decode';
+import keyValueStore from './KeyValueStore';
 
 dotenv.config();
 
-const port = parseInt(String(process.env.PORT), 10) || 3000;
+const port = parseInt(String(process.env.PORT), 10) || 8081;
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const {
-    SHOPIFY_API_SECRET,
-    SHOPIFY_API_KEY,
-    HOST,
-    SHOPIFY_ACCESS_TOKEN,
-    SHOP,
-} = process.env;
+const { SHOPIFY_API_SECRET, SHOPIFY_API_KEY, HOST, SCOPES } = process.env;
 
-if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SHOP) {
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
     throw new Error(
-        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SHOP',
+        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SCOPES',
     );
 }
+
+const isRegistrationQuery = (query: {
+    hmac?: string;
+    session?: string;
+}): boolean => {
+    return !!query.hmac && !!query.session;
+};
 
 app.prepare()
     // eslint-disable-next-line promise/always-return
@@ -48,12 +50,7 @@ app.prepare()
             createShopifyAuth({
                 apiKey: SHOPIFY_API_KEY,
                 secret: SHOPIFY_API_SECRET,
-                scopes: [
-                    'read_products',
-                    'write_products',
-                    'read_themes',
-                    'write_themes',
-                ],
+                scopes: [SCOPES],
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session as Session;
                     console.log('accessToken', accessToken);
@@ -63,16 +60,49 @@ app.prepare()
                         sameSite: 'none',
                     });
 
-                    await getSubscriptionUrl(ctx, accessToken, shop);
+                    await keyValueStore.updateToken(shop, accessToken);
+
+                    ctx.redirect(`/?shop=${String(shop)}`);
                 },
             }),
         );
 
+        server.use(async (ctx, next2: () => Promise<void>) => {
+            if (isRegistrationQuery(ctx.query)) {
+                await next2();
+                return;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+            const jwtFromHeader = ctx.headers['auth-token'];
+
+            const shopUrl =
+                ctx.cookies.get('shopOrigin') ||
+                (jwtFromHeader
+                    ? jwt_decode<{ dest: string }>(jwtFromHeader).dest
+                    : '');
+
+            const contextSession = ctx.session;
+
+            if (!contextSession || !shopUrl) {
+                throw new Error('Authentication invalid.');
+            }
+
+            const cleanedShopUrl = shopUrl.startsWith('http')
+                ? new URL(shopUrl).host
+                : shopUrl;
+
+            const token = await keyValueStore.getToken(cleanedShopUrl);
+
+            contextSession.shop = cleanedShopUrl;
+            contextSession.accessToken = token;
+
+            await next2();
+        });
+
         server.use(
             graphQLProxy({
                 version: ApiVersion.Unstable,
-                password: SHOPIFY_ACCESS_TOKEN,
-                shop: `https://${SHOP}`,
             }),
         );
 

@@ -232,6 +232,7 @@ function SellingPlans({
                 </Card.Section>
                 <Card.Section>
                     {sellingPlanGroup.sellingPlans.map((plan) => {
+                        console.log('plan id', plan.id);
                         const edited =
                             sellingPlanGroup.isEditingPlan &&
                             sellingPlanGroup.currentlyEditingPlanId === plan.id;
