@@ -26,6 +26,13 @@ if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
     );
 }
 
+const isRegistrationQuery = (query: {
+    hmac?: string;
+    session?: string;
+}): boolean => {
+    return !!query.hmac && !!query.session;
+};
+
 app.prepare()
     // eslint-disable-next-line promise/always-return
     .then(() => {
@@ -61,12 +68,7 @@ app.prepare()
         );
 
         server.use(async (ctx, next2: () => Promise<void>) => {
-            // TODO find better way of determine whether we are in context of registration
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (ctx.query.hmac && ctx.query.session) {
-                // eslint-disable-next-line no-console
-                console.warn('Skipping token middleware. Query:', ctx.query);
-
+            if (isRegistrationQuery(ctx.query)) {
                 await next2();
                 return;
             }
