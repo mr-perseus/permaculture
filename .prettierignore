@@ -1,6 +1,7 @@
 theme
-.eslintrc.js
-next.config.js
+.travis.yml
+schema.graphql
+schema.json
 admin-extension/build/
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,yarn,react,macos,linux,windows,webstorm+all,visualstudiocode

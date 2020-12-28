@@ -117,9 +117,10 @@ const CREATE_SELLING_PLAN = gql`
 function Create() {
     const data = useData<'Admin::Product::SubscriptionPlan::Create'>();
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done } = useContainer<
-        'Admin::Product::SubscriptionPlan::Create'
-    >();
+    const {
+        close,
+        done,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Create'>();
 
     const locale = useLocale();
     const localizedStrings: Translations = useMemo(() => {
@@ -216,9 +217,10 @@ function Edit() {
     const [percentageOff, setPercentageOff] = useState('10');
     const [deliveryFrequency, setDeliveryFrequency] = useState('1');
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done } = useContainer<
-        'Admin::Product::SubscriptionPlan::Edit'
-    >();
+    const {
+        close,
+        done,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Edit'>();
 
     const onPrimaryAction = useCallback(async () => {
         const token = await getSessionToken();

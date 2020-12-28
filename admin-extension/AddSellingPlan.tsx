@@ -154,9 +154,12 @@ export default function AddSellingPlan(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Add'>();
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done, setPrimaryAction, setSecondaryAction } = useContainer<
-        'Admin::Product::SubscriptionPlan::Add'
-    >();
+    const {
+        close,
+        done,
+        setPrimaryAction,
+        setSecondaryAction,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Add'>();
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const { show: showToast } = useToast();
