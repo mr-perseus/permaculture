@@ -12,8 +12,6 @@ If you plan to use this completed app, then make sure that you first complete th
 2. Install npm packages: run `yarn`
 3. Start your app: `shopify serve`
 4. Deploy your app on a store (Login here: https://partners.shopify.com/ go to "Apps" -> {YOUR_APP} -> "Test your app" -> "Select store")
-5. Add to `.env` file: `SHOPIFY_ACCESS_TOKEN={your_shopify_access_token}`
-6. Restart your app.
 
 Note: You need to allow third party cookies on myshopify.com
 
