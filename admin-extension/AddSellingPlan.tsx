@@ -11,8 +11,13 @@ import {
     useToast,
 } from '@shopify/argo-admin-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { GraphQLError } from 'graphql';
 import { translations, Translations } from './adminTranslations';
-import { getClient, useGraphQLErrorToast } from './adminUtils';
+import {
+    addProductToSellingPlan,
+    getClient,
+    useGraphQLErrorToast,
+} from './adminUtils';
 
 const GET_SELLING_PLANS = gql`
     query sellingPlanGroups($productId: ID!) {
@@ -58,73 +63,6 @@ interface SellingPlan {
     appliesToProductVariant?: boolean;
 }
 
-const ADD_SELLING_PLAN = gql`
-    mutation productJoinSellingPlanGroups(
-        $id: ID!
-        $sellingPlanGroupIds: [ID!]!
-    ) {
-        productJoinSellingPlanGroups(
-            id: $id
-            sellingPlanGroupIds: $sellingPlanGroupIds
-        ) {
-            product {
-                id
-            }
-            userErrors {
-                code
-                field
-                message
-            }
-        }
-    }
-`;
-
-const ADD_SELLING_PLAN_VARIANT = gql`
-    mutation productJoinSellingPlanGroups(
-        $id: ID!
-        $sellingPlanGroupIds: [ID!]!
-    ) {
-        productVariantJoinSellingPlanGroups(
-            id: $id
-            sellingPlanGroupIds: $sellingPlanGroupIds
-        ) {
-            productVariant {
-                id
-            }
-            userErrors {
-                code
-                field
-                message
-            }
-        }
-    }
-`;
-
-async function addRemote(
-    token: string | undefined,
-    selectedPlans: string[],
-    productId: string,
-    variantId?: string,
-) {
-    if (variantId) {
-        return getClient(token).mutate({
-            mutation: ADD_SELLING_PLAN_VARIANT,
-            variables: {
-                id: variantId,
-                sellingPlanGroupIds: selectedPlans,
-            },
-        });
-    }
-
-    return getClient(token).mutate({
-        mutation: ADD_SELLING_PLAN,
-        variables: {
-            id: productId,
-            sellingPlanGroupIds: selectedPlans,
-        },
-    });
-}
-
 async function fetchPlans(
     sessionToken: string | undefined,
     data: {
@@ -154,21 +92,22 @@ export default function AddSellingPlan(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Add'>();
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    const {
-        close,
-        done,
-        setPrimaryAction,
-        setSecondaryAction,
-    } = useContainer<'Admin::Product::SubscriptionPlan::Add'>();
+    const { close, done, setPrimaryAction, setSecondaryAction } = useContainer<
+        'Admin::Product::SubscriptionPlan::Add'
+    >();
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const { show: showToast } = useToast();
-    const showGraphQLError = useGraphQLErrorToast();
+    const showGraphQLError: (
+        errors: readonly GraphQLError[],
+    ) => void = useGraphQLErrorToast();
     const locale = useLocale();
-    const localizedStrings: Translations = useMemo(() => {
-        // eslint-disable-next-line security/detect-object-injection
-        return translations[locale] || translations.en;
-    }, [locale]);
+    const localizedStrings: Translations = useMemo(
+        () =>
+            // eslint-disable-next-line security/detect-object-injection
+            translations[locale] || translations.en,
+        [locale],
+    );
 
     const { getSessionToken } = useSessionToken();
     const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
@@ -207,7 +146,7 @@ export default function AddSellingPlan(): JSX.Element {
             onAction: async () => {
                 try {
                     const token = await getSessionToken();
-                    const { errors } = await addRemote(
+                    const { errors } = await addProductToSellingPlan(
                         token,
                         selectedPlans,
                         data.productId,
