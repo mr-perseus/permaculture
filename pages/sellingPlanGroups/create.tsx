@@ -1,4 +1,3 @@
-import gql from 'graphql-tag';
 import React, { ReactElement, useState } from 'react';
 import { useMutation } from 'react-apollo';
 import {
@@ -14,55 +13,11 @@ import {
 } from '@shopify/polaris';
 import { useRouter } from 'next/router';
 import { gidToId } from '../../lib/utils';
-
-const CREATE_SELLING_PLAN = gql`
-    mutation($input: SellingPlanGroupInput!) {
-        sellingPlanGroupCreate(input: $input) {
-            sellingPlanGroup {
-                id
-            }
-            userErrors {
-                code
-                field
-                message
-            }
-        }
-    }
-`;
-
-type SellingPlanGroupCreateResult = {
-    sellingPlanGroupCreate: {
-        sellingPlanGroup?: { id: string };
-        userErrors: {
-            code: string;
-            message: string;
-        }[];
-    };
-};
-
-type SellingPlanGroupCreate = {
-    name: string;
-    description?: string;
-    options: string[];
-    sellingPlansToCreate: SellingPlanCreate[]; // TODO replace any with SellingPlan
-};
-
-type SellingPlanCreate = {
-    name: string;
-    options: string[];
-    deliveryPolicy: {
-        recurring: {
-            interval: string;
-            intervalCount: number;
-        };
-    };
-    billingPolicy: {
-        recurring: {
-            interval: string;
-            intervalCount: number;
-        };
-    };
-};
+import {
+    CREATE_SELLING_PLAN,
+    SellingPlanGroupCreate,
+    SellingPlanGroupCreateResult,
+} from '../../lib/sellingPlanGraphQL';
 
 const CreateSellingPlanGroup = (): ReactElement => {
     const [createSellingPlanGroup] = useMutation<
