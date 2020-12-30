@@ -35,10 +35,10 @@ function Edit() {
 
     const [percentageOff, setPercentageOff] = useState('10');
     const [deliveryFrequency, setDeliveryFrequency] = useState('1');
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done } = useContainer<
-        'Admin::Product::SubscriptionPlan::Edit'
-    >();
+    const {
+        close,
+        done,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Edit'>();
 
     const onPrimaryAction = useCallback(async () => {
         const token = await getSessionToken();

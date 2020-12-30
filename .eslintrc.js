@@ -52,5 +52,6 @@ module.exports = {
         'import/no-unresolved': 'error',
         '@typescript-eslint/prefer-optional-chain': 'error',
         'class-methods-use-this': 'off',
+        '@typescript-eslint/unbound-method': 'off',
     },
 };

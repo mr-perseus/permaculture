@@ -21,8 +21,11 @@ class KeyValueStore {
             ? new Sequelize({
                   dialect: 'sqlite',
                   storage: 'store.db',
+                  logging: false,
               })
-            : new Sequelize(String(process.env.DATABASE_URL));
+            : new Sequelize(String(process.env.DATABASE_URL), {
+                  logging: false,
+              });
 
         this.storeTokens = sequelize.define<AppPropertiesInstance>(
             modelName,

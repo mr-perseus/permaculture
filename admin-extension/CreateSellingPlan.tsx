@@ -24,10 +24,10 @@ import {
 
 const CreateSellingPlan: React.FunctionComponent = () => {
     const data = useData<'Admin::Product::SubscriptionPlan::Create'>();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done } = useContainer<
-        'Admin::Product::SubscriptionPlan::Create'
-    >();
+    const {
+        close,
+        done,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Create'>();
 
     const locale = useLocale();
     const localizedStrings: Translations = useMemo(
