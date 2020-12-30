@@ -1,53 +1,16 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react';
+import React, { ReactElement } from 'react';
 import {
     Button,
     Card,
+    CardSection,
+    Link,
     Stack,
     Text,
-    TextField,
     useContainer,
-    useData,
-    useSessionToken,
 } from '@shopify/argo-admin-react';
-import { getClient } from './adminUtils';
-import { CREATE_SELLING_PLAN } from '../lib/sellingPlanGraphQL';
 
 const EditSellingPlan = (): ReactElement => {
-    const data = useData<'Admin::Product::SubscriptionPlan::Edit'>();
-    const [planTitle, setPlanTitle] = useState('Current plan');
-    const [deliveryFrequency, setDeliveryFrequency] = useState('1');
-
-    const { getSessionToken } = useSessionToken();
-
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done } = useContainer<
-        'Admin::Product::SubscriptionPlan::Edit'
-    >();
-
-    const onPrimaryAction = useCallback(async () => {
-        const token = await getSessionToken();
-        await getClient(token).mutate({
-            mutation: CREATE_SELLING_PLAN,
-            variables: {},
-        });
-        done();
-    }, [getSessionToken, done]);
-
-    const actions = useMemo(
-        () => (
-            <Stack spacing="none" distribution="fill">
-                <Button title="Cancel" onPress={() => close()} />
-                <Stack distribution="trailing">
-                    <Button
-                        title="Edit plan"
-                        onPress={onPrimaryAction}
-                        primary
-                    />
-                </Stack>
-            </Stack>
-        ),
-        [onPrimaryAction, close],
-    );
+    const { close } = useContainer<'Admin::Product::SubscriptionPlan::Edit'>();
 
     return (
         <>
@@ -55,29 +18,23 @@ const EditSellingPlan = (): ReactElement => {
                 <Text size="titleLarge">Edit subscription plan</Text>
             </Stack>
 
-            <Card
-                title={`Edit subscription plan for Product id ${data.productId}`}
-                sectioned
-            >
-                <TextField
-                    label="Plan title"
-                    value={planTitle}
-                    onChange={setPlanTitle}
-                />
+            <Card sectioned>
+                <CardSection>
+                    <Text size="medium">
+                        For more control over your selling plan configurations,
+                        visit the perma subs selling plan management page
+                    </Text>
+                </CardSection>
+                <CardSection>
+                    <Stack spacing="loose" distribution="trailing">
+                        <Button title="Cancel" onPress={() => close()} />
+                        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                        <Link url="/admin/apps/perma-subs">
+                            <Button title="Edit selling plans" primary />
+                        </Link>
+                    </Stack>
+                </CardSection>
             </Card>
-
-            <Card title="Delivery options" sectioned>
-                <Stack>
-                    <TextField
-                        type="number"
-                        label="Delivery frequency (in weeks)"
-                        value={deliveryFrequency}
-                        onChange={setDeliveryFrequency}
-                    />
-                </Stack>
-            </Card>
-
-            {actions}
         </>
     );
 };
