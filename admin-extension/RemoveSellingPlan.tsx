@@ -96,10 +96,12 @@ async function removeProductOrVariant(
 
 export default function Remove(): JSX.Element {
     const data = useData<'Admin::Product::SubscriptionPlan::Remove'>();
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const { close, done, setPrimaryAction, setSecondaryAction } = useContainer<
-        'Admin::Product::SubscriptionPlan::Remove'
-    >();
+    const {
+        close,
+        done,
+        setPrimaryAction,
+        setSecondaryAction,
+    } = useContainer<'Admin::Product::SubscriptionPlan::Remove'>();
     const locale = useLocale();
     const localizedStrings: Translations = useMemo(
         () =>

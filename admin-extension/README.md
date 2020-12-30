@@ -1,7 +1,8 @@
 # Run your app
 
 1. Install dependencies with `npm install` or `yarn install`
-2. Run `shopify serve`
+2. Make sure you have the `HOST` environment variable set in the .env file of the root project directory (`../.env` relative to the admin extension). For default app (Heroku), remove the `HOST` environment variable there.
+3. Run `shopify serve`
 
 # Deploy to Shopify
 
