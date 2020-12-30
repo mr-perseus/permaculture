@@ -29,8 +29,9 @@ if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
 const isRegistrationQuery = (query: {
     hmac?: string;
     session?: string;
+    page?: string;
 }): boolean => {
-    return !!query.hmac && !!query.session;
+    return (!!query.hmac && !!query.session) || query.page === '/';
 };
 
 app.prepare()
