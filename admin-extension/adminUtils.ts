@@ -11,7 +11,6 @@ import {
 export function getClient(sessionToken?: string): ApolloClient<never> {
     const HOST = process.env.HOST || 'https://permaculture-app.herokuapp.com';
     return new ApolloClient({
-        // todo shop could be read from the url
         uri: `${HOST}/graphql`,
         headers: {
             'auth-token': sessionToken,
