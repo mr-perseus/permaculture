@@ -11,11 +11,7 @@ import {
 } from '@shopify/argo-admin-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { translations, Translations } from './adminTranslations';
-import {
-    addProductToSellingPlan,
-    getClient,
-    useGraphQLErrorToast,
-} from './adminUtils';
+import { getClient, useGraphQLErrorToast } from './adminUtils';
 import {
     CREATE_SELLING_PLAN,
     SellingPlanGroupCreate,
@@ -53,7 +49,13 @@ const CreateSellingPlan: React.FunctionComponent = () => {
         const token = await getSessionToken();
         const { errors, data: createData } = await getClient(token).mutate<
             SellingPlanGroupCreateResult,
-            { input: SellingPlanGroupCreate }
+            {
+                input: SellingPlanGroupCreate;
+                resources: {
+                    productIds: string[];
+                    productVariantIds: string[];
+                };
+            }
         >({
             mutation: CREATE_SELLING_PLAN,
             variables: {
@@ -79,40 +81,38 @@ const CreateSellingPlan: React.FunctionComponent = () => {
                         },
                     ],
                 },
+                resources: {
+                    productIds: [data.productId].filter(
+                        (id) => id && !data.variantId,
+                    ),
+                    productVariantIds: [data.variantId].reduce((arr, id) => {
+                        if (id) {
+                            arr.push(id);
+                        }
+                        return arr;
+                    }, [] as string[]),
+                },
             },
         });
         if (errors && errors.length > 0) {
             errorToast(errors);
-            done();
+        } else if (!createData) {
+            errorToast(['Error: Could not create selling plan']);
         } else if (
-            !createData ||
             !createData.sellingPlanGroupCreate ||
             !createData.sellingPlanGroupCreate.sellingPlanGroup ||
             !createData.sellingPlanGroupCreate.sellingPlanGroup.id
         ) {
-            errorToast(['Error: Could not create selling plan']);
-            done();
-        } else {
-            const { id } = createData.sellingPlanGroupCreate.sellingPlanGroup;
-            const {
-                errors: addErrors,
-                data: addData,
-            } = await addProductToSellingPlan(
-                await getSessionToken(),
-                [id],
-                data.productId,
-                data.variantId,
+            errorToast(
+                ['Error: '].concat(
+                    ...createData.sellingPlanGroupCreate.userErrors.map(
+                        (err) => err.message,
+                    ),
+                ),
             );
-
-            if (addErrors && addErrors.length > 0) {
-                errorToast(addErrors);
-            } else if (!addData || !addData.productJoinSellingPlanGroups) {
-                errorToast(['Error: Could not add product to selling plan']);
-                done();
-            } else {
-                done();
-            }
         }
+
+        done();
     }, [
         data.productId,
         data.variantId,
