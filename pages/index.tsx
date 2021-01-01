@@ -1,11 +1,14 @@
 import React, { ReactElement, useCallback, useMemo, useState } from 'react';
 import { Tabs } from '@shopify/polaris';
 import SubscriptionsTab from '../components/SubscriptionsTab';
+import ContractsTab from '../components/ContractsTab';
 
 const AppTab = ({ selected }: { selected: number }): ReactElement => {
     switch (selected) {
         case 0:
             return <SubscriptionsTab />;
+        case 1:
+            return <ContractsTab />;
         default:
             return <h1>Fatal error</h1>;
     }
@@ -13,7 +16,10 @@ const AppTab = ({ selected }: { selected: number }): ReactElement => {
 
 const AppTabs = (): ReactElement => {
     const tabs = useMemo(
-        () => [{ id: 'subscriptions', content: 'Subscriptions' }],
+        () => [
+            { id: 'subscriptions', content: 'Subscriptions' },
+            { id: 'contracts', content: 'Contracts' },
+        ],
         [],
     );
 
