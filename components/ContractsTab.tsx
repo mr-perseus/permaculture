@@ -5,6 +5,9 @@ import {
     Badge,
     Card,
     EmptyState,
+    Frame,
+    Layout,
+    Page,
     ResourceItem,
     ResourceList,
     Stack,
@@ -73,26 +76,34 @@ const CustomerItem = ({ customer }: { customer: Customer }): ReactElement => {
 
 const Customers = ({ customers }: { customers: Customer[] }): ReactElement => {
     return (
-        <>
-            {customers.length !== 0 ? (
-                <Card>
-                    <ResourceList
-                        resourceName={{
-                            plural: 'Subscription contracts',
-                            singular: 'Subscription contract',
-                        }}
-                        items={customers}
-                        renderItem={(customer) => {
-                            return <CustomerItem customer={customer} />;
-                        }}
-                    />
-                </Card>
-            ) : (
-                <EmptyState heading="Create subscriptions" image={img}>
-                    <p>No subscription was sold</p>
-                </EmptyState>
-            )}
-        </>
+        <Page title="Contracts">
+            <Frame>
+                <Layout>
+                    <Layout.Section>
+                        {customers.length !== 0 ? (
+                            <Card>
+                                <ResourceList
+                                    resourceName={{
+                                        plural: 'Subscription contracts',
+                                        singular: 'Subscription contract',
+                                    }}
+                                    items={customers}
+                                    renderItem={(customer) => {
+                                        return (
+                                            <CustomerItem customer={customer} />
+                                        );
+                                    }}
+                                />
+                            </Card>
+                        ) : (
+                            <EmptyState heading="Empty contracts" image={img}>
+                                <p>No subscription was yet sold</p>
+                            </EmptyState>
+                        )}
+                    </Layout.Section>
+                </Layout>
+            </Frame>
+        </Page>
     );
 };
 
