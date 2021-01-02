@@ -1,6 +1,6 @@
 import 'isomorphic-fetch';
 import dotenv from 'dotenv';
-import Koa, { Context } from 'koa';
+import Koa from 'koa';
 import cors from 'koa-cors';
 import logger from 'koa-logger';
 import next from 'next';
@@ -8,8 +8,8 @@ import session, { Session } from 'koa-session';
 import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
-import jwt_decode from 'jwt-decode';
 import keyValueStore from './KeyValueStore';
+import injectGraphqlAccessToken from './injectGraphqlAccessToken';
 
 dotenv.config();
 
@@ -25,30 +25,6 @@ if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
         'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SCOPES',
     );
 }
-
-const injectGraphqlAccessToken = async (ctx: Context): Promise<void> => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    const jwtFromHeader = ctx.headers['auth-token'];
-
-    const shopUrl =
-        ctx.cookies.get('shopOrigin') ||
-        (jwtFromHeader ? jwt_decode<{ dest: string }>(jwtFromHeader).dest : '');
-
-    const contextSession = ctx.session;
-
-    if (!contextSession || !shopUrl) {
-        throw new Error('Authentication invalid.');
-    }
-
-    const cleanedShopUrl = shopUrl.startsWith('http')
-        ? new URL(shopUrl).host
-        : shopUrl;
-
-    const token = await keyValueStore.getToken(cleanedShopUrl);
-
-    contextSession.shop = cleanedShopUrl;
-    contextSession.accessToken = token;
-};
 
 app.prepare()
     // eslint-disable-next-line promise/always-return
@@ -84,13 +60,7 @@ app.prepare()
             }),
         );
 
-        server.use(async (ctx, next2: () => Promise<void>) => {
-            if (ctx.originalUrl === '/graphql') {
-                await injectGraphqlAccessToken(ctx);
-            }
-
-            await next2();
-        });
+        server.use(injectGraphqlAccessToken());
 
         server.use(
             graphQLProxy({
