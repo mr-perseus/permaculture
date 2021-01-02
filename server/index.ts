@@ -1,6 +1,6 @@
 import 'isomorphic-fetch';
 import dotenv from 'dotenv';
-import Koa from 'koa';
+import Koa, { Context } from 'koa';
 import cors from 'koa-cors';
 import logger from 'koa-logger';
 import next from 'next';
@@ -26,12 +26,28 @@ if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
     );
 }
 
-const isRegistrationQuery = (query: {
-    hmac?: string;
-    session?: string;
-    page?: string;
-}): boolean => {
-    return (!!query.hmac && !!query.session) || query.page === '/';
+const injectGraphqlAccessToken = async (ctx: Context): Promise<void> => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    const jwtFromHeader = ctx.headers['auth-token'];
+
+    const shopUrl =
+        ctx.cookies.get('shopOrigin') ||
+        (jwtFromHeader ? jwt_decode<{ dest: string }>(jwtFromHeader).dest : '');
+
+    const contextSession = ctx.session;
+
+    if (!contextSession || !shopUrl) {
+        throw new Error('Authentication invalid.');
+    }
+
+    const cleanedShopUrl = shopUrl.startsWith('http')
+        ? new URL(shopUrl).host
+        : shopUrl;
+
+    const token = await keyValueStore.getToken(cleanedShopUrl);
+
+    contextSession.shop = cleanedShopUrl;
+    contextSession.accessToken = token;
 };
 
 app.prepare()
@@ -69,34 +85,9 @@ app.prepare()
         );
 
         server.use(async (ctx, next2: () => Promise<void>) => {
-            if (isRegistrationQuery(ctx.query)) {
-                await next2();
-                return;
+            if (ctx.originalUrl === '/graphql') {
+                await injectGraphqlAccessToken(ctx);
             }
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-            const jwtFromHeader = ctx.headers['auth-token'];
-
-            const shopUrl =
-                ctx.cookies.get('shopOrigin') ||
-                (jwtFromHeader
-                    ? jwt_decode<{ dest: string }>(jwtFromHeader).dest
-                    : '');
-
-            const contextSession = ctx.session;
-
-            if (!contextSession || !shopUrl) {
-                throw new Error('Authentication invalid.');
-            }
-
-            const cleanedShopUrl = shopUrl.startsWith('http')
-                ? new URL(shopUrl).host
-                : shopUrl;
-
-            const token = await keyValueStore.getToken(cleanedShopUrl);
-
-            contextSession.shop = cleanedShopUrl;
-            contextSession.accessToken = token;
 
             await next2();
         });
