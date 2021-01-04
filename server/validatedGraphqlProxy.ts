@@ -20,15 +20,23 @@ const validatedGraphqlProxy = (appApiSecretKey: string) => {
         const jwtFromHeader = ctx.headers['auth-token'];
 
         if (jwtFromHeader) {
-            const decoded: WebTokenObject = jwt.verify(
-                jwtFromHeader,
-                appApiSecretKey,
-                {
-                    algorithms: ['HS256'],
-                },
-            ) as WebTokenObject;
+            try {
+                const decoded: WebTokenObject = jwt.verify(
+                    jwtFromHeader,
+                    appApiSecretKey,
+                    {
+                        algorithms: ['HS256'],
+                    },
+                ) as WebTokenObject;
 
-            shopUrl = decoded.dest;
+                shopUrl = decoded.dest;
+            } catch (error) {
+                console.error('JWT Validation Error', error);
+
+                throw new Error(
+                    'Session invalid. Please make sure the "Permaculture" app is running and refresh this page.',
+                );
+            }
         }
 
         const shopOriginCookie = ctx.cookies.get('shopOrigin');
