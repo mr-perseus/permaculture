@@ -101,7 +101,7 @@ const Subscriptions = ({
 
         if (errors && errors.length > 0) {
             setShowError(true);
-        } else if (data?.userErrors && data.userErrors.length > 0) {
+        } else if (data?.userErrors?.length) {
             setShowError(true);
         } else {
             setGroups((prevGroups) =>

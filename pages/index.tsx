@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import { Tabs } from '@shopify/polaris';
 import SubscriptionsTab from '../components/SubscriptionsTab';
 import ContractsTab from '../components/ContractsTab';
@@ -24,12 +24,9 @@ const AppTabs = (): ReactElement => {
     );
 
     const [selected, setSelected] = useState(0);
-    const handleSelected = useCallback((selectedTabIndex: number) => {
-        setSelected(selectedTabIndex);
-    }, []);
 
     return (
-        <Tabs tabs={tabs} selected={selected} onSelect={handleSelected} fitted>
+        <Tabs tabs={tabs} selected={selected} onSelect={setSelected} fitted>
             <AppTab selected={selected} />
         </Tabs>
     );
