@@ -5,10 +5,8 @@ import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
-import { AppProps } from 'next/app';
+import { AppContext, AppProps } from 'next/app';
 import React from 'react';
-import { useRouter } from 'next/router';
-import { NextPage } from 'next';
 import ClientRouter from '../components/ClientRouter';
 
 const client = new ApolloClient({
@@ -17,10 +15,11 @@ const client = new ApolloClient({
     },
 });
 
-const MyApp: NextPage<AppProps> = ({ Component, pageProps }: AppProps) => {
-    const router = useRouter();
-    const shopOrigin = String(router.query.shop);
-
+const MyApp = ({
+    Component,
+    pageProps,
+    shopOrigin,
+}: AppProps & { shopOrigin: string }) => {
     const config = { apiKey: API_KEY, shopOrigin, forceRedirect: true };
 
     return (
@@ -41,6 +40,12 @@ const MyApp: NextPage<AppProps> = ({ Component, pageProps }: AppProps) => {
             </Provider>
         </>
     );
+};
+
+MyApp.getInitialProps = ({ ctx }: AppContext) => {
+    return {
+        shopOrigin: ctx.query.shop,
+    };
 };
 
 export default MyApp;
