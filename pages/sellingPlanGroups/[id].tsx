@@ -154,7 +154,12 @@ const UpdateSellingPlanGroup = ({
 
     return (
         <Page
-            breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
+            breadcrumbs={[
+                {
+                    content: 'Selling plan groups',
+                    url: `/?shop=${String(router.query.shop)}`,
+                },
+            ]}
             title={sellingPlanGroup.name}
             subtitle={sellingPlanGroup.description}
             titleMetadata={<Badge status="success">Active</Badge>}

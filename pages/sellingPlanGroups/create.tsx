@@ -80,7 +80,12 @@ const CreateSellingPlanGroup = (): ReactElement => {
         <>
             <Page
                 title="Create new selling plan group"
-                breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
+                breadcrumbs={[
+                    {
+                        content: 'Selling plan groups',
+                        url: `/?shop=${String(router.query.shop)}`,
+                    },
+                ]}
             >
                 <Frame>
                     <Card>
