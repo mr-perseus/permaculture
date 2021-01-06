@@ -13,8 +13,8 @@ import {
 import React, { useState } from 'react';
 import { gql } from 'apollo-boost';
 import { Query, QueryResult, useMutation } from 'react-apollo';
-import { useRouter } from 'next/router';
 import { gidToId } from '../lib/utils';
+import useRouterWithShop from '../lib/useRouterWithShop';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 const GET_SELLING_PLAN_GROUPS = gql`
@@ -61,16 +61,13 @@ const SellingPlanGroupItem = ({
     name: string;
     handleDelete: () => void;
 }) => {
-    const router = useRouter();
+    const router = useRouterWithShop();
 
     return (
         <ResourceItem
             id={id}
             onClick={async () => {
-                await router.push({
-                    pathname: `/sellingPlanGroups/${id}`,
-                    query: { shop: router.query.shop },
-                });
+                await router.push(`/sellingPlanGroups/${id}`);
             }}
             accessibilityLabel={`View details for ${name}`}
             shortcutActions={[
@@ -94,7 +91,7 @@ const Subscriptions = ({
 }: {
     sellingPlanGroups: SellingPlanGroup[];
 }): React.ReactElement => {
-    const router = useRouter();
+    const router = useRouterWithShop();
     const [groups, setGroups] = useState(sellingPlanGroups);
     const [showError, setShowError] = useState(false);
     const [deleteSellingPlanGroup] = useMutation<{
@@ -123,10 +120,7 @@ const Subscriptions = ({
                 <Button
                     primary
                     onClick={async () => {
-                        await router.push({
-                            pathname: '/sellingPlanGroups/create',
-                            query: { shop: router.query.shop },
-                        });
+                        await router.push('/sellingPlanGroups/create');
                     }}
                 >
                     Create subscription
@@ -165,11 +159,9 @@ const Subscriptions = ({
                                 action={{
                                     content: 'Create subscription',
                                     async onAction() {
-                                        await router.push({
-                                            pathname:
-                                                '/sellingPlanGroups/create',
-                                            query: { shop: router.query.shop },
-                                        });
+                                        await router.push(
+                                            '/sellingPlanGroups/create',
+                                        );
                                     },
                                 }}
                                 image={img}

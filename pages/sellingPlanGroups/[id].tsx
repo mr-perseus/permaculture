@@ -1,7 +1,6 @@
 import gql from 'graphql-tag';
 import React, { ReactElement, useReducer } from 'react';
 import { useMutation } from 'react-apollo';
-import { useRouter } from 'next/router';
 import { Badge, Frame, Layout, Page, PageActions } from '@shopify/polaris';
 import { idToGid } from '../../lib/utils';
 import EditSellingPlanGroup from '../../components/EditSellingPlanGroup';
@@ -13,6 +12,7 @@ import sellingPlanGroupReducer, {
 
 import useSellingPlanGroup from '../../lib/useSellingPlanGroup';
 import withId from '../../lib/withId';
+import useRouterWithShop from '../../lib/useRouterWithShop';
 
 const UPDATE_SELLING_PLAN_GROUP = gql`
     mutation sellingPlanGroupUpdate($id: ID!, $input: SellingPlanGroupInput!) {
@@ -123,7 +123,7 @@ const UpdateSellingPlanGroup = ({
     initialSellingPlanGroup: SellingPlanGroup;
     gid: string;
 }): ReactElement => {
-    const router = useRouter();
+    const router = useRouterWithShop();
     const [updateSellingPlanGroup] = useMutation(UPDATE_SELLING_PLAN_GROUP);
     const [deleteSellingPlanGroup] = useMutation(DELETE_SELLING_PLAN_GROUP);
 
@@ -141,10 +141,7 @@ const UpdateSellingPlanGroup = ({
                 id: sellingPlanGroup.id,
             },
         });
-        await router.push({
-            pathname: '/index',
-            query: { shop: router.query.shop },
-        });
+        await router.push('/index');
     };
 
     const handleDelete = async () => {
