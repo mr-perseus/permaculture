@@ -1,13 +1,12 @@
 import { Context } from 'koa';
 import jwt from 'jsonwebtoken';
-import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import keyValueStore from './KeyValueStore';
 
 interface WebTokenObject {
     dest: string;
 }
 
-const validatedGraphqlProxy = (appApiSecretKey: string) => {
+const authenticateGraphqlProxy = (appApiSecretKey: string) => {
     return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
         if (ctx.path !== '/graphql' || ctx.method !== 'POST') {
             await next();
@@ -41,26 +40,22 @@ const validatedGraphqlProxy = (appApiSecretKey: string) => {
 
         const shopOriginCookie = ctx.cookies.get('shopOrigin');
         if (shopOriginCookie) {
-            // TODO Is cookie already validated by KOA? Or just use https://shopify.dev/tutorials/authenticate-your-app-using-session-tokens instead?
             shopUrl = ctx.cookies.get('shopOrigin');
         }
 
-        if (!shopUrl) {
+        if (!shopUrl || !ctx.session) {
             throw new Error('Authentication invalid.');
         }
 
-        const shop = shopUrl.startsWith('http')
+        const cleanedShopUrl = shopUrl.startsWith('http')
             ? new URL(shopUrl).host
             : shopUrl;
 
-        const password = await keyValueStore.getToken(shop);
+        ctx.session.shop = cleanedShopUrl;
+        ctx.session.accessToken = await keyValueStore.getToken(cleanedShopUrl);
 
-        await graphQLProxy({
-            version: ApiVersion.Unstable,
-            password,
-            shop,
-        })(ctx, next);
+        await next();
     };
 };
 
-export default validatedGraphqlProxy;
+export default authenticateGraphqlProxy;

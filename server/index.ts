@@ -5,10 +5,11 @@ import cors from 'koa-cors';
 import logger from 'koa-logger';
 import next from 'next';
 import session, { Session } from 'koa-session';
+import graphQLProxy, { ApiVersion } from '@shopify/koa-shopify-graphql-proxy';
 import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
 import keyValueStore from './KeyValueStore';
-import validatedGraphqlProxy from './validatedGraphqlProxy';
+import authenticateGraphqlProxy from './authenticateGraphqlProxy';
 
 dotenv.config();
 
@@ -59,7 +60,13 @@ app.prepare()
             }),
         );
 
-        server.use(validatedGraphqlProxy(SHOPIFY_API_SECRET));
+        server.use(authenticateGraphqlProxy(SHOPIFY_API_SECRET));
+
+        server.use(
+            graphQLProxy({
+                version: ApiVersion.Unstable,
+            }),
+        );
 
         router.get('(.*)', verifyRequest(), async (ctx) => {
             await handle(ctx.req, ctx.res);
