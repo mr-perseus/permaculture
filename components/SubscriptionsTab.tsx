@@ -61,10 +61,17 @@ const SellingPlanGroupItem = ({
     name: string;
     handleDelete: () => void;
 }) => {
+    const router = useRouter();
+
     return (
         <ResourceItem
             id={id}
-            url={`/sellingPlanGroups/${id}`}
+            onClick={async () => {
+                await router.push({
+                    pathname: `/sellingPlanGroups/${id}`,
+                    query: { shop: router.query.shop },
+                });
+            }}
             accessibilityLabel={`View details for ${name}`}
             shortcutActions={[
                 {
@@ -116,7 +123,10 @@ const Subscriptions = ({
                 <Button
                     primary
                     onClick={async () => {
-                        await router.push('/sellingPlanGroups/create');
+                        await router.push({
+                            pathname: '/sellingPlanGroups/create',
+                            query: { shop: router.query.shop },
+                        });
                     }}
                 >
                     Create subscription
@@ -155,9 +165,11 @@ const Subscriptions = ({
                                 action={{
                                     content: 'Create subscription',
                                     async onAction() {
-                                        await router.push(
-                                            '/sellingPlanGroups/create',
-                                        );
+                                        await router.push({
+                                            pathname:
+                                                '/sellingPlanGroups/create',
+                                            query: { shop: router.query.shop },
+                                        });
                                     },
                                 }}
                                 image={img}

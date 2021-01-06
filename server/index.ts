@@ -10,6 +10,7 @@ import Router from 'koa-router';
 import createShopifyAuth, { verifyRequest } from '@shopify/koa-shopify-auth';
 import keyValueStore from './KeyValueStore';
 import authenticateGraphqlProxy from './authenticateGraphqlProxy';
+import getSubscriptionUrl from './getSubscriptionUrl';
 
 dotenv.config();
 
@@ -18,11 +19,11 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const { SHOPIFY_API_SECRET, SHOPIFY_API_KEY, HOST, SCOPES } = process.env;
+const { SHOPIFY_API_SECRET, SHOPIFY_API_KEY, HOST } = process.env;
 
-if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST || !SCOPES) {
+if (!SHOPIFY_API_KEY || !SHOPIFY_API_SECRET || !HOST) {
     throw new Error(
-        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST, SCOPES',
+        'One of the following Environment variables are missing: SHOPIFY_API_KEY, SHOPIFY_API_SECRET, HOST',
     );
 }
 
@@ -43,19 +44,28 @@ app.prepare()
             createShopifyAuth({
                 apiKey: SHOPIFY_API_KEY,
                 secret: SHOPIFY_API_SECRET,
-                scopes: [SCOPES],
+                scopes: [
+                    'write_products',
+                    'write_customers',
+                    'write_draft_orders',
+                    'write_own_subscription_contracts',
+                    'write_discounts',
+                    'write_themes',
+                ],
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session as Session;
                     console.log('accessToken', accessToken);
-                    ctx.cookies.set('shopOrigin', shop, {
-                        httpOnly: false,
-                        secure: true,
-                        sameSite: 'none',
-                    });
 
                     await keyValueStore.updateToken(shop, accessToken);
 
-                    ctx.redirect(`/?shop=${String(shop)}`);
+                    const returnUrl = `${HOST}?shop=${String(shop)}`;
+                    const subscriptionUrl = await getSubscriptionUrl(
+                        accessToken,
+                        shop,
+                        returnUrl,
+                    );
+
+                    ctx.redirect(subscriptionUrl);
                 },
             }),
         );

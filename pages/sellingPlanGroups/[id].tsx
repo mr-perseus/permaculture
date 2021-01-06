@@ -141,7 +141,10 @@ const UpdateSellingPlanGroup = ({
                 id: sellingPlanGroup.id,
             },
         });
-        await router.push('/index');
+        await router.push({
+            pathname: '/index',
+            query: { shop: router.query.shop },
+        });
     };
 
     const handleDelete = async () => {
