@@ -6,8 +6,8 @@ import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
+import { AppProps } from 'next/app';
 import React from 'react';
-import { AppPropsType } from 'next/dist/next-server/lib/utils';
 import ClientRouter from '../components/ClientRouter';
 
 const client = new ApolloClient({
@@ -16,10 +16,7 @@ const client = new ApolloClient({
     },
 });
 
-const MyApp: React.FC<AppPropsType> = ({
-    Component,
-    pageProps,
-}: AppPropsType) => {
+const MyApp: React.FC<AppProps> = ({ Component, pageProps }: AppProps) => {
     const config = {
         apiKey: API_KEY,
         shopOrigin: Cookies.get('shopOrigin') || '',

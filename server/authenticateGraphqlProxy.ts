@@ -36,11 +36,11 @@ const authenticateGraphqlProxy = (appApiSecretKey: string) => {
                     'Session invalid. Please make sure the "Permaculture" app is running and refresh this page.',
                 );
             }
-        }
-
-        const shopOriginCookie = ctx.cookies.get('shopOrigin');
-        if (shopOriginCookie) {
-            shopUrl = ctx.cookies.get('shopOrigin');
+        } else {
+            const shopOriginCookie = ctx.cookies.get('shopOrigin');
+            if (shopOriginCookie) {
+                shopUrl = ctx.cookies.get('shopOrigin');
+            }
         }
 
         if (!shopUrl || !ctx.session) {
