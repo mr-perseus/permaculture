@@ -2,15 +2,8 @@ import gql from 'graphql-tag';
 import React, { ReactElement, useReducer } from 'react';
 import { useMutation } from 'react-apollo';
 import { useRouter } from 'next/router';
-import {
-    Badge,
-    CalloutCard,
-    Frame,
-    Layout,
-    Page,
-    PageActions,
-} from '@shopify/polaris';
-import { gidToId, idToGid } from '../../lib/utils';
+import { Badge, Frame, Layout, Page, PageActions } from '@shopify/polaris';
+import { idToGid } from '../../lib/utils';
 import EditSellingPlanGroup from '../../components/EditSellingPlanGroup';
 import SellingPlans from '../../components/SellingPlans';
 import sellingPlanGroupReducer, {
@@ -159,7 +152,6 @@ const UpdateSellingPlanGroup = ({
         });
     };
 
-    const id = gidToId(sellingPlanGroup.id);
     return (
         <Page
             breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
@@ -170,15 +162,6 @@ const UpdateSellingPlanGroup = ({
             <Frame>
                 <Layout>
                     <Layout.Section>
-                        <CalloutCard
-                            title="Configure products in selling plan group"
-                            primaryAction={{
-                                content: 'Configure products',
-                                url: `/sellingPlanGroups/${id}/products`,
-                            }}
-                            /* eslint-disable-next-line no-secrets/no-secrets */
-                            illustration="https://cdn.shopify.com/s/assets/admin/checkout/settings-customizecart-705f57c725ac05be5a34ec20c05b94298cb8afd10aac7bd9c7ad02030f48cfa0.svg"
-                        />
                         <EditSellingPlanGroup
                             sellingPlanGroup={sellingPlanGroup}
                             dispatch={dispatch}
