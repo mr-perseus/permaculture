@@ -70,9 +70,9 @@ app.prepare()
             }),
         );
 
-        server.use(authenticateGraphqlProxy(SHOPIFY_API_SECRET));
-
-        server.use(
+        router.post(
+            '/graphql',
+            authenticateGraphqlProxy(SHOPIFY_API_SECRET),
             graphQLProxy({
                 version: ApiVersion.Unstable,
             }),

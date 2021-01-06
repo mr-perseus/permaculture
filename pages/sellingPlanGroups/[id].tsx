@@ -12,7 +12,7 @@ import sellingPlanGroupReducer, {
 
 import useSellingPlanGroup from '../../lib/useSellingPlanGroup';
 import withId from '../../lib/withId';
-import useRouterWithShop from '../../lib/useRouterWithShop';
+import useRouterWithShopQuery from '../../lib/useRouterWithShopQuery';
 
 const UPDATE_SELLING_PLAN_GROUP = gql`
     mutation sellingPlanGroupUpdate($id: ID!, $input: SellingPlanGroupInput!) {
@@ -123,7 +123,7 @@ const UpdateSellingPlanGroup = ({
     initialSellingPlanGroup: SellingPlanGroup;
     gid: string;
 }): ReactElement => {
-    const router = useRouterWithShop();
+    const router = useRouterWithShopQuery();
     const [updateSellingPlanGroup] = useMutation(UPDATE_SELLING_PLAN_GROUP);
     const [deleteSellingPlanGroup] = useMutation(DELETE_SELLING_PLAN_GROUP);
 

@@ -17,7 +17,7 @@ import {
     SellingPlanGroupCreate,
     SellingPlanGroupCreateResult,
 } from '../../lib/sellingPlanGraphQL';
-import useRouterWithShop from '../../lib/useRouterWithShop';
+import useRouterWithShopQuery from '../../lib/useRouterWithShopQuery';
 
 const CreateSellingPlanGroup = (): ReactElement => {
     const [createSellingPlanGroup] = useMutation<
@@ -28,7 +28,7 @@ const CreateSellingPlanGroup = (): ReactElement => {
     const [name, setName] = useState('New selling plan group');
     const [description, setDescription] = useState('');
     const [showError, setShowError] = useState(false);
-    const router = useRouterWithShop();
+    const router = useRouterWithShopQuery();
 
     const handleSubmit = async () => {
         const { data, errors } = await createSellingPlanGroup({

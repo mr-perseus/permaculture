@@ -5,7 +5,7 @@ interface RouterWithShop extends NextRouter {
     replace: (url: string) => Promise<boolean>;
 }
 
-const useRouterWithShop: () => RouterWithShop = () => {
+const useRouterWithShopQuery: () => RouterWithShop = () => {
     const router = useRouter();
 
     return {
@@ -25,4 +25,4 @@ const useRouterWithShop: () => RouterWithShop = () => {
     };
 };
 
-export default useRouterWithShop;
+export default useRouterWithShopQuery;

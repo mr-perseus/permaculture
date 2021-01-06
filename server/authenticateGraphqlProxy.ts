@@ -31,26 +31,26 @@ const validateTokenGetShopUrl = (
 
 const authenticateGraphqlProxy = (appApiSecretKey: string) => {
     return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-        const jwtFromHeader = ctx.headers['auth-token'];
+        const jwtFromHeader = (ctx.headers as {
+            'auth-token'?: string;
+        })['auth-token'];
 
-        if (ctx.path === '/graphql' && ctx.method === 'POST' && jwtFromHeader) {
-            const shopUrl = validateTokenGetShopUrl(
-                jwtFromHeader,
-                appApiSecretKey,
-            );
-
-            if (!shopUrl || !ctx.session) {
-                throw new Error('Authentication invalid.');
-            }
-
-            const cleanedShopUrl = new URL(shopUrl).host;
-
-            ctx.session.shop = cleanedShopUrl;
-            ctx.session.accessToken = await keyValueStore.getToken(
-                cleanedShopUrl,
-            );
+        if (!jwtFromHeader) {
+            // If the call comes from the app instead of the argo extension, Koa takes care of the session validation and there is no 'auth-token' header.
+            await next();
+            return;
         }
+
+        const shopUrl = validateTokenGetShopUrl(jwtFromHeader, appApiSecretKey);
+
+        if (!shopUrl || !ctx.session) {
+            throw new Error('Authentication invalid.');
+        }
+
+        const cleanedShopUrl = new URL(shopUrl).host;
+
+        ctx.session.shop = cleanedShopUrl;
+        ctx.session.accessToken = await keyValueStore.getToken(cleanedShopUrl);
 
         await next();
     };
