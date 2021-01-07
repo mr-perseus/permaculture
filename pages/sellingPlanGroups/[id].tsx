@@ -1,6 +1,7 @@
 import gql from 'graphql-tag';
 import React, { ReactElement, useReducer } from 'react';
 import { useMutation } from 'react-apollo';
+import { useRouter } from 'next/router';
 import { Badge, Frame, Layout, Page, PageActions } from '@shopify/polaris';
 import { idToGid } from '../../lib/utils';
 import EditSellingPlanGroup from '../../components/EditSellingPlanGroup';
@@ -12,7 +13,6 @@ import sellingPlanGroupReducer, {
 
 import useSellingPlanGroup from '../../lib/useSellingPlanGroup';
 import withId from '../../lib/withId';
-import useRouterWithShopQuery from '../../lib/useRouterWithShopQuery';
 
 const UPDATE_SELLING_PLAN_GROUP = gql`
     mutation sellingPlanGroupUpdate($id: ID!, $input: SellingPlanGroupInput!) {
@@ -123,7 +123,7 @@ const UpdateSellingPlanGroup = ({
     initialSellingPlanGroup: SellingPlanGroup;
     gid: string;
 }): ReactElement => {
-    const router = useRouterWithShopQuery();
+    const router = useRouter();
     const [updateSellingPlanGroup] = useMutation(UPDATE_SELLING_PLAN_GROUP);
     const [deleteSellingPlanGroup] = useMutation(DELETE_SELLING_PLAN_GROUP);
 
@@ -154,12 +154,7 @@ const UpdateSellingPlanGroup = ({
 
     return (
         <Page
-            breadcrumbs={[
-                {
-                    content: 'Selling plan groups',
-                    url: `/?shop=${String(router.query.shop)}`,
-                },
-            ]}
+            breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
             title={sellingPlanGroup.name}
             subtitle={sellingPlanGroup.description}
             titleMetadata={<Badge status="success">Active</Badge>}

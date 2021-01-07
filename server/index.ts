@@ -55,14 +55,18 @@ app.prepare()
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session as Session;
                     console.log('accessToken', accessToken);
+                    ctx.cookies.set('shopOrigin', shop, {
+                        httpOnly: false,
+                        secure: true,
+                        sameSite: 'none',
+                    });
 
                     await keyValueStore.updateToken(shop, accessToken);
 
-                    const returnUrl = `${HOST}?shop=${String(shop)}`;
                     const subscriptionUrl = await getSubscriptionUrl(
                         accessToken,
                         shop,
-                        returnUrl,
+                        HOST,
                     );
 
                     ctx.redirect(subscriptionUrl);

@@ -13,8 +13,8 @@ import {
 import React, { useState } from 'react';
 import { gql } from 'apollo-boost';
 import { Query, QueryResult, useMutation } from 'react-apollo';
+import { useRouter } from 'next/router';
 import { gidToId } from '../lib/utils';
-import useRouterWithShopQuery from '../lib/useRouterWithShopQuery';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 const GET_SELLING_PLAN_GROUPS = gql`
@@ -61,7 +61,7 @@ const SellingPlanGroupItem = ({
     name: string;
     handleDelete: () => void;
 }) => {
-    const router = useRouterWithShopQuery();
+    const router = useRouter();
 
     return (
         <ResourceItem
@@ -91,7 +91,7 @@ const Subscriptions = ({
 }: {
     sellingPlanGroups: SellingPlanGroup[];
 }): React.ReactElement => {
-    const router = useRouterWithShopQuery();
+    const router = useRouter();
     const [groups, setGroups] = useState(sellingPlanGroups);
     const [showError, setShowError] = useState(false);
     const [deleteSellingPlanGroup] = useMutation<{

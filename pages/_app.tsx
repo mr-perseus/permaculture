@@ -1,11 +1,12 @@
 import Head from 'next/head';
 import { AppProvider } from '@shopify/polaris';
 import { Provider } from '@shopify/app-bridge-react';
+import Cookies from 'js-cookie';
 import '@shopify/polaris/dist/styles.css';
 import translations from '@shopify/polaris/locales/en.json';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from 'react-apollo';
-import { AppContext, AppProps } from 'next/app';
+import { AppProps } from 'next/app';
 import React from 'react';
 import ClientRouter from '../components/ClientRouter';
 
@@ -15,13 +16,12 @@ const client = new ApolloClient({
     },
 });
 
-const MyApp = ({
-    Component,
-    pageProps,
-    shopOrigin,
-}: AppProps & { shopOrigin: string }) => {
-    const config = { apiKey: API_KEY, shopOrigin, forceRedirect: true };
-
+const MyApp: React.FC<AppProps> = ({ Component, pageProps }: AppProps) => {
+    const config = {
+        apiKey: API_KEY,
+        shopOrigin: Cookies.get('shopOrigin') || '',
+        forceRedirect: true,
+    };
     return (
         <>
             <Head>
@@ -40,12 +40,6 @@ const MyApp = ({
             </Provider>
         </>
     );
-};
-
-MyApp.getInitialProps = ({ ctx }: AppContext) => {
-    return {
-        shopOrigin: ctx.query.shop,
-    };
 };
 
 export default MyApp;

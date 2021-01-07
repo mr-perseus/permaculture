@@ -11,13 +11,13 @@ import {
     TextField,
     Toast,
 } from '@shopify/polaris';
+import { useRouter } from 'next/router';
 import { gidToId } from '../../lib/utils';
 import {
     CREATE_SELLING_PLAN,
     SellingPlanGroupCreate,
     SellingPlanGroupCreateResult,
 } from '../../lib/sellingPlanGraphQL';
-import useRouterWithShopQuery from '../../lib/useRouterWithShopQuery';
 
 const CreateSellingPlanGroup = (): ReactElement => {
     const [createSellingPlanGroup] = useMutation<
@@ -28,7 +28,7 @@ const CreateSellingPlanGroup = (): ReactElement => {
     const [name, setName] = useState('New selling plan group');
     const [description, setDescription] = useState('');
     const [showError, setShowError] = useState(false);
-    const router = useRouterWithShopQuery();
+    const router = useRouter();
 
     const handleSubmit = async () => {
         const { data, errors } = await createSellingPlanGroup({
@@ -80,12 +80,7 @@ const CreateSellingPlanGroup = (): ReactElement => {
         <>
             <Page
                 title="Create new selling plan group"
-                breadcrumbs={[
-                    {
-                        content: 'Selling plan groups',
-                        url: `/?shop=${String(router.query.shop)}`,
-                    },
-                ]}
+                breadcrumbs={[{ content: 'Selling plan groups', url: '/' }]}
             >
                 <Frame>
                     <Card>

@@ -79,6 +79,7 @@
         "graphql": "^14.7.0",
         "graphql-tag": "^2.11.0",
         "isomorphic-fetch": "^3.0.0",
+        "js-cookie": "^2.2.1",
         "jsonwebtoken": "^8.5.1",
         "koa": "^2.13.0",
         "koa-cors": "^0.0.16",
@@ -97,6 +98,7 @@
     "devDependencies": {
         "@types/cors": "^2.8.8",
         "@types/jest": "^26.0.15",
+        "@types/js-cookie": "^2.2.6",
         "@types/jsonwebtoken": "^8.5.0",
         "@types/koa-cors": "^0.0.0",
         "@types/koa-logger": "^3.1.1",
