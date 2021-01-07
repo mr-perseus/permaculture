@@ -22,6 +22,7 @@ const MyApp: React.FC<AppProps> = ({ Component, pageProps }: AppProps) => {
         shopOrigin: Cookies.get('shopOrigin') || '',
         forceRedirect: true,
     };
+
     return (
         <>
             <Head>

@@ -6,6 +6,8 @@ type WebTokenObject = {
     dest: string;
 };
 
+const JWT_CLOCK_TOLERANCE_SECONDS = 10;
+
 const validateTokenGetShopUrl = (
     jwtFromHeader: string,
     appApiSecretKey: string,
@@ -16,6 +18,7 @@ const validateTokenGetShopUrl = (
             appApiSecretKey,
             {
                 algorithms: ['HS256'],
+                clockTolerance: JWT_CLOCK_TOLERANCE_SECONDS,
             },
         ) as WebTokenObject;
 
