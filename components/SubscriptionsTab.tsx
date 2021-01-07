@@ -61,10 +61,14 @@ const SellingPlanGroupItem = ({
     name: string;
     handleDelete: () => void;
 }) => {
+    const router = useRouter();
+
     return (
         <ResourceItem
             id={id}
-            url={`/sellingPlanGroups/${id}`}
+            onClick={async () => {
+                await router.push(`/sellingPlanGroups/${id}`);
+            }}
             accessibilityLabel={`View details for ${name}`}
             shortcutActions={[
                 {

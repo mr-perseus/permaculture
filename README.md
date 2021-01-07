@@ -10,7 +10,7 @@ If you plan to use this completed app, then make sure that you first complete th
 
 1. [Install the latest stable version of Node.js.](https://developers.shopify.com/tutorials/build-a-shopify-app-with-node-and-react/set-up-your-app#install-the-latest-stable-version)
 2. Install npm packages: run `yarn`
-3. Start your app: `shopify serve`
+3. Start your app: `shopify serve`. If you use a custom ngrok url, use `shopify serve --host=https://<NGROK_SUBDOMAIN>.ngrok.io`. I.e. `shopify serve --host=https://permaculture1.eu.ngrok.io`
 4. Deploy your app on a store (Login here: https://partners.shopify.com/ go to "Apps" -> {YOUR_APP} -> "Test your app" -> "Select store")
 
 Note: You need to allow third party cookies on myshopify.com

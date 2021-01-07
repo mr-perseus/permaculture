@@ -1,34 +1,32 @@
-import { Context } from 'koa';
-
 const getSubscriptionUrl = async (
-    ctx: Context,
     accessToken: string,
     shop: string,
-): Promise<void> => {
+    returnUrl: string,
+): Promise<string> => {
     const query = JSON.stringify({
         query: `mutation {
-      appSubscriptionCreate(
-          name: "Super Duper Plan"
-          returnUrl: "${String(process.env.HOST)}"
-          test: true
-          lineItems: [
-          {
-            plan: {
-              appUsagePricingDetails: {
-                  cappedAmount: { amount: 10, currencyCode: USD }
-                  terms: "$1 for 1000 emails"
+          appSubscriptionCreate(
+            name: "Super Duper Plan"
+            returnUrl: "${returnUrl}"
+            test: true
+            lineItems: [
+            {
+              plan: {
+                appUsagePricingDetails: {
+                    cappedAmount: { amount: 10, currencyCode: USD }
+                    terms: "$1 for 1000 emails"
+                }
               }
             }
-          }
-          {
-            plan: {
-              appRecurringPricingDetails: {
-                  price: { amount: 10, currencyCode: USD }
+            {
+              plan: {
+                appRecurringPricingDetails: {
+                    price: { amount: 10, currencyCode: USD }
+                }
               }
             }
-          }
-          ]
-        ) {
+            ]
+          ) {
             userErrors {
               field
               message
@@ -37,8 +35,8 @@ const getSubscriptionUrl = async (
             appSubscription {
               id
             }
-        }
-    }`,
+          }
+        }`,
     });
 
     const response = await fetch(
@@ -56,8 +54,8 @@ const getSubscriptionUrl = async (
     const responseJson = (await response.json()) as {
         data: { appSubscriptionCreate: { confirmationUrl: string } };
     };
-    const { confirmationUrl } = responseJson.data.appSubscriptionCreate;
-    return ctx.redirect(confirmationUrl);
+
+    return responseJson.data.appSubscriptionCreate.confirmationUrl;
 };
 
 export default getSubscriptionUrl;
