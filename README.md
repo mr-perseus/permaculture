@@ -2,7 +2,7 @@
 
 ## Using our existing store
 
-You can use this existing store "Permaculture5": https://permaculture5.myshopify.com/
+You can use this existing store "Permaculture1": https://permaculture5.myshopify.com/
 
 <!-- TODO links to App and extension -->
 
@@ -123,6 +123,8 @@ EXTENSION_ID=<YOUR_EXTENSION_ID>
 The extension ID is visible in the extension's url: partners.shopify.com/<PARTNER_ID>/apps/<APP_ID>/extensions/product_subscription/<EXTENSION_ID>/settings
 
 Push the extension: run `shopify push`
+
+You can now add Subscriptions to a product on the product's edit screen: <YOUR_STORE>.myshopify.com/admin/products/
 
 # Download GraphQL schema
 
