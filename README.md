@@ -104,7 +104,25 @@ Then run `shopify serve`.
 #### Deploy the Admin extension as a new extension
 
 If you haven't deployed this extension yet, you can deploy it with the following commands:
-1. TODOOOOOOO
+
+1. Register the extension: `shopify register --api-key=<YOUR_APP_API_KEY>`
+2. Push the extension: `shoify push`
+
+#### Deploy the Admin extension as an existing extension
+
+If you have deployed this extension already, you need to manually change the `.env` file:
+
+```
+SHOPIFY_API_KEY=<YOUR_APP_API_KEY>
+SHOPIFY_API_SECRET=<YOUR_APP_API_SECRET_KEY>
+SHOP=<YOUR_STORE_NAME>.myshopify.com
+EXTENSION_TITLE=<EXTENSION_TITLE>
+EXTENSION_ID=<YOUR_EXTENSION_ID>
+```
+
+The extension ID is visible in the extension's url: partners.shopify.com/<PARTNER_ID>/apps/<APP_ID>/extensions/product_subscription/<EXTENSION_ID>/settings
+
+Push the extension: run `shopify push`
 
 # Download GraphQL schema
 
