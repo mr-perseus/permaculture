@@ -54,7 +54,7 @@ app.prepare()
                 ],
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session as Session;
-                    console.log('accessToken', accessToken);
+
                     ctx.cookies.set('shopOrigin', shop, {
                         httpOnly: false,
                         secure: true,

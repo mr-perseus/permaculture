@@ -1,8 +1,15 @@
 import gql from 'graphql-tag';
-import React, { ReactElement, useReducer } from 'react';
+import React, { ReactElement, useReducer, useState } from 'react';
 import { useMutation } from 'react-apollo';
 import { useRouter } from 'next/router';
-import { Badge, Frame, Layout, Page, PageActions } from '@shopify/polaris';
+import {
+    Badge,
+    Frame,
+    Layout,
+    Page,
+    PageActions,
+    Toast,
+} from '@shopify/polaris';
 import { idToGid } from '../../lib/utils';
 import EditSellingPlanGroup from '../../components/EditSellingPlanGroup';
 import SellingPlans from '../../components/SellingPlans';
@@ -57,6 +64,7 @@ type SellingPlanInput = {
     id?: string;
     name: string;
     description: string;
+    options: string;
     billingPolicy: {
         recurring: {
             interval: Interval;
@@ -82,17 +90,18 @@ function mapToInput(sellingPlanGroup: SellingPlanGroup) {
         } else {
             const planInput: SellingPlanInput = {
                 name: plan.name,
-                description: plan.description,
+                description: plan.description || '',
+                options: plan.name,
                 billingPolicy: {
                     recurring: {
                         interval: plan.deliveryPolicy.interval,
-                        intervalCount: 1,
+                        intervalCount: plan.deliveryPolicy.intervalCount || 1,
                     },
                 },
                 deliveryPolicy: {
                     recurring: {
                         interval: plan.deliveryPolicy.interval,
-                        intervalCount: 1,
+                        intervalCount: plan.deliveryPolicy.intervalCount || 1,
                     },
                 },
             };
@@ -132,7 +141,35 @@ const UpdateSellingPlanGroup = ({
         initialSellingPlanGroup,
     );
 
+    const [error, setError] = useState<{
+        showError: boolean;
+        errorMessage?: string;
+    }>({
+        showError: false,
+    });
+
+    const planNamesAreDuplicated = (): boolean => {
+        const sellingPlanNames: string[] = sellingPlanGroup.sellingPlans.map(
+            (plan) => plan.name,
+        );
+
+        return sellingPlanNames.some(
+            (plan, index) => sellingPlanNames.indexOf(plan) !== index,
+        );
+    };
+
     const handleSave = async () => {
+        const duplicated = planNamesAreDuplicated();
+
+        if (duplicated) {
+            setError({
+                showError: true,
+                errorMessage: 'Selling Plan Names must be unique.',
+            });
+
+            return;
+        }
+
         const input = mapToInput(sellingPlanGroup);
 
         await updateSellingPlanGroup({
@@ -190,6 +227,13 @@ const UpdateSellingPlanGroup = ({
                         />
                     </Layout.Section>
                 </Layout>
+                {error.showError && (
+                    <Toast
+                        content={error.errorMessage || 'Unexpected error'}
+                        error
+                        onDismiss={() => setError({ showError: false })}
+                    />
+                )}
             </Frame>
         </Page>
     );
