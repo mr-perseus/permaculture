@@ -102,7 +102,7 @@ function EditSellingPlan({
         });
     };
 
-    const handleIntervalChnage = (val: string): void => {
+    const handleIntervalChange = (val: string): void => {
         const newInterval = val as Interval;
         setInterval(() => newInterval);
     };
@@ -129,7 +129,7 @@ function EditSellingPlan({
                             name="delivery"
                             checked={interval === 'DAY'}
                             onChange={(_, newVal) =>
-                                handleIntervalChnage(newVal)
+                                handleIntervalChange(newVal)
                             }
                         />
                         <RadioButton
@@ -138,7 +138,7 @@ function EditSellingPlan({
                             name="delivery"
                             checked={interval === 'WEEK'}
                             onChange={(_, newVal) =>
-                                handleIntervalChnage(newVal)
+                                handleIntervalChange(newVal)
                             }
                         />
                         <RadioButton
@@ -147,7 +147,7 @@ function EditSellingPlan({
                             name="delivery"
                             checked={interval === 'MONTH'}
                             onChange={(_, newVal) =>
-                                handleIntervalChnage(newVal)
+                                handleIntervalChange(newVal)
                             }
                         />
                     </Stack>
@@ -232,7 +232,6 @@ function SellingPlans({
                 </Card.Section>
                 <Card.Section>
                     {sellingPlanGroup.sellingPlans.map((plan) => {
-                        console.log('plan id', plan.id);
                         const edited =
                             sellingPlanGroup.isEditingPlan &&
                             sellingPlanGroup.currentlyEditingPlanId === plan.id;
