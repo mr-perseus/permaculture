@@ -1,18 +1,6 @@
 # Installation guide
 
-## Using our existing store
-
-You can use this existing store "Permaculture1": https://permaculture5.myshopify.com/
-
-<!-- TODO links to App and extension -->
-
-Note: You need to allow third party cookies on the page <YOUR_STORE_NAME>.myshopify.com to ngrok.io
-
-## Creating a new store
-
-Note: Unfortunately, you need to request access to the Subscription APIs for our app which may take up to 7 business days.
-
-### Sign up for a new store
+## Sign up for a new store
 
 To create a new fresh store, you can sign up on Shopify and create one for free:
 
@@ -23,11 +11,11 @@ To create a new fresh store, you can sign up on Shopify and create one for free:
     3. Choose "Custom App"
 3. Create a store: https://help.shopify.com/en/partners/dashboard/managing-stores/development-stores#create-a-development-store-for-testing-apps-or-themes
 
-### Install required tools
+## Install required tools
 
 To run the app, you need to install Node, Yarn, and the Shopify CLI
 
-#### Install Node.js
+### Install Node.js
 
 You can install Node.js via NVM or other methods: https://nodejs.org/en/download/
 
@@ -39,7 +27,7 @@ nvm install --lts
 choco install nodejs-lts
 ```
 
-#### Install Yarn
+### Install Yarn
 
 You can install Yarn via your package manager or download it here: https://classic.yarnpkg.com/en/docs/install
 
@@ -56,11 +44,11 @@ sudo port install yarn
 choco install yarn
 ```
 
-#### Install Shopify CLI
+### Install Shopify CLI
 
 To install the Shopify CLI, please follow these instructions: https://shopify.github.io/shopify-app-cli/getting-started/install/
 
-### Install and run the app
+## Install and run the app
 
 1. Install node dependencies: run `yarn install`
 2. Start your app: `shopify serve`. (Optional: If you wish to use a custom ngrok url, use `shopify serve --host=https://<NGROK_SUBDOMAIN>.ngrok.io` instead. I.e. `shopify serve --host=https://permaculture1.eu.ngrok.io`)
@@ -73,14 +61,14 @@ To install the Shopify CLI, please follow these instructions: https://shopify.gi
     2. Click on your app.
     3. Click on "App setup".
     4. In "Subscriptions" -> "Access Subscriptions APIs", click on "Request access".
-    5. Wait until Shopify granted you access.
+    5. Wait until Shopify granted you access. This may take up to seven business days.
     6. Go back to your app's overview page. In "Test your app" click "Select store"
     7. Choose your newly created store.
     8. The app is now running at <YOUR_STORE_NAME>.myshopify.com/admin/apps
 
 Note: You need to allow third party cookies on the page <YOUR_STORE_NAME>.myshopify.com to ngrok.io
 
-#### Manually connect to your app / store
+### Manually connect to your app / store
 
 If you already created / installed the app on a store, you can alternatively skip steps 2 and 3 above and manipulate the .env file directly.
 
@@ -95,20 +83,20 @@ HOST=https://<NGROK_ID>.ngrok.io
 
 Then run `shopify serve`.
 
-### Install and run the Admin extension
+## Install and run the Admin extension
 
 1. Install node dependencies in the admin-extension directory: `cd admin-extension && yarn install`
 2. Make sure you have the `HOST` environment variable set in the .env file of the root project directory (`../.env` relative to admin-extension). For default app (Heroku), remove the `HOST` environment variable there.
 3. Run `shopify serve` to run it locally.
 
-#### Deploy the Admin extension as a new extension
+### Deploy the Admin extension as a new extension
 
 If you haven't deployed this extension yet, you can deploy it with the following commands:
 
 1. Register the extension: `shopify register --api-key=<YOUR_APP_API_KEY>`
 2. Push the extension: `shoify push`
 
-#### Deploy the Admin extension as an existing extension
+### Deploy the Admin extension as an existing extension
 
 If you have deployed this extension already, you need to manually change the `.env` file:
 
@@ -125,6 +113,27 @@ The extension ID is visible in the extension's url: partners.shopify.com/<PARTNE
 Push the extension: run `shopify push`
 
 You can now add Subscriptions to a product on the product's edit screen: <YOUR_STORE>.myshopify.com/admin/products/
+
+## Add subscription to theme
+
+In order to enable subscriptions in the checkout process for customers, you need to add the subscriptions to the theme.
+
+Note: You first need to enable Shopify payments, so the subscriptions appear in the theme. Shopify payments is currently not available in a Swiss store, but it is available in most other stores (i.e. Germany).
+
+1. Edit your theme like described in this guide: https://help.shopify.com/en/manual/online-store/os/using-themes/change-the-layout/theme-settings
+2. Add the following code snipped to your product template as described here: https://shopify.dev/tutorials/customize-theme-showing-selling-plan-groups-and-selling-plans
+
+```
+{% for group in product.selling_plan_groups %}
+<fieldset>
+  <legend>{{ group.name}}</legend>
+  {% for selling_plan in group.selling_plans %}
+    <input type="radio" name="selling_plan" value="{{ selling_plan.id }}">
+    {{ selling_plan.name }}
+  {% endfor %}
+</fieldset>
+{% endfor %}
+```
 
 # Download GraphQL schema
 
