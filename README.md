@@ -118,7 +118,7 @@ You can now add Subscriptions to a product on the product's edit screen: <YOUR_S
 
 In order to enable subscriptions in the checkout process for customers, you need to add the subscriptions to the theme.
 
-Note: You need to enable Shopify payments so the subscriptions appear in the theme first. Shopify payments is currently not available in a Swiss store, but it is available in most other stores (i.e. Germany).
+Note: You first need to enable Shopify payments, so the subscriptions appear in the theme. Shopify payments is currently not available in a Swiss store, but it is available in most other stores (i.e. Germany).
 
 1. Edit your theme like described in this guide: https://help.shopify.com/en/manual/online-store/os/using-themes/change-the-layout/theme-settings
 2. Add the following code snipped to your product template as described here: https://shopify.dev/tutorials/customize-theme-showing-selling-plan-groups-and-selling-plans
